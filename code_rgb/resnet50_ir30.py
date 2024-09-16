@@ -59,6 +59,7 @@ torch.backends.cuda.enable_flash_sdp(False)
 torch.backends.cuda.enable_math_sdp(True)
 
 
+from torch.cuda.amp import autocast, GradScaler
 
 
 
@@ -372,6 +373,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
         
                 if torch.cuda.is_available():
                     model.cuda()
+                    print('Model moved to GPU')
 
                 ## Given the train and validation indices of a fold, get the train, validation and test datasets
                 ## NOTE: test_dataset is created by splitting the indices within the training dataset
@@ -449,7 +451,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     #val_losses = []
 
                     dataloaders = {
-                        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=8) for x in ['train', 'val', 'test']
+                        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=8, pin_memory = True) for x in ['train', 'val', 'test']
                     }
                     
 
@@ -479,28 +481,54 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                             running_corrects = 0
                             n_batch_iterations = len(dataloaders[phase])
 
+                            scaler = GradScaler()
                             ## Iterate over the data
                             batch_count = 1
                             for inputs, labels in dataloaders[phase]:
+                                #add times
+                                #print('start')
+                                #start_time = time.time()
                                 inputs = inputs.to(device)
                                 labels = labels.to(device)
+                                #end_time = time.time()
+                                #print(f"Time to move to device: {end_time - start_time}")
                                 #print('to device')
 
                                 # zero the parameter gradients
-                                optimizer.zero_grad()
+                                optimizer.zero_grad(set_to_none=True)
 
                                 # forward
+                                #start_time = time.time()
                                 # track history if only in train
-                                with torch.set_grad_enabled(phase == 'train'):
-                                    outputs = model(inputs)
-                                    _, preds = torch.max(outputs, 1)
-                                    loss = criterion(outputs, labels)
+                                #with torch.set_grad_enabled(phase == 'train'):
+                                #    outputs = model(inputs)
+                                #    _, preds = torch.max(outputs, 1)
+                                #    loss = criterion(outputs, labels)
 
                                     # backward + optimize only if in training phase
-                                    if phase == 'train':
-                                        loss.backward()
-                                        optimizer.step()
+                                #    if phase == 'train':
+                                #        loss.backward()
+                                #        optimizer.step()
 
+                                with torch.autocast(device_type='cuda', dtype=torch.float16):
+                                    outputs = model(inputs)
+                                    loss = criterion(outputs, labels)
+                                
+                                if phase == 'train':
+                                    scaler.scale(loss).backward()
+                                    scaler.step(optimizer)
+                                    scaler.update()
+
+                                #total_loss += loss.item()
+                                _, preds = outputs.max(1)
+                                #total += labels.size(0)
+                                #correct += preds.eq(labels).sum().item()
+
+
+
+                                #end_time = time.time()
+                                #print(f"Time to forward and backward pass: {end_time - start_time}")
+                                
                                 
                                 #print('finished training')
 
@@ -683,7 +711,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     #MODEL SAVE - FINISH AND START NEW WANDB RUN IF fold is lower than 4
                     wandb.finish()
                     if fold < 4:
-                        wandb.init(project="neckface_IR_30fps_v3")
+                        wandb.init(project="neckface_IR_30fps_v4")
                         # Config is a variable that holds and saves hyperparameters and inputs
                         config = wandb.config
                         optimized = config.optimizer
@@ -697,7 +725,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     print(e)
                     wandb.finish()
                     if fold < 4:
-                        wandb.init(project="neckface_IR_30fps_v3")
+                        wandb.init(project="neckface_IR_30fps_v4")
                         # Config is a variable that holds and saves hyperparameters and inputs
                         config = wandb.config
                         optimized = config.optimizer
@@ -729,7 +757,7 @@ def main():
         color_channel = "BGR" #CHECKKKKKKKKKKKKKKK
         data_frame_rate = 30
         #dataset_path = "../../../../data/final_study_data_BGR_30fps"
-        dataset_path = "/scratch/neckface_image_data"
+        dataset_path = "../../../../data/final_study_data_BGR_30fps"
         output_directory = "../../../../data/training_outputs/"
         #MODEL SAVE
         last_model_save_dir = output_directory + "model_data/" + "resnet50_30fps/"
@@ -819,7 +847,7 @@ def main():
 
         num_epochs = 200
 
-        sweep_id = wandb.sweep(sweep_config,project="neckface_IR_30fps_v3")
+        sweep_id = wandb.sweep(sweep_config,project="neckface_IR_30fps_v4")
 
         train_func = train_wrapper(study_a_participants=neckface_participants,
                                    study_a_data_path=neckface_participant_data_path,
