@@ -18,9 +18,9 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import StratifiedKFold, train_test_split
+
 import os
 os.environ["WANDB__SERVICE_WAIT"]="300"
-
 
 
 # >>> ==================== Non Mixed Participant Changes ===================
@@ -87,16 +87,16 @@ print('DEVICE:', device)
 class_labels = ["0", "1"]
 
 
-#define the model, resnet34
-class ResNet34(nn.Module):
+#define the model, resnet50
+class ResNet50(nn.Module):
     def __init__(self, num_classes, activation='relu'):
-        super(ResNet34, self).__init__()
+        super(ResNet50, self).__init__()
 
 
-        self.resnet34 = models.resnet34(weights="IMAGENET1K_V1")
-        in_features = self.resnet34.fc.in_features
+        self.resnet50 = models.resnet50(weights="IMAGENET1K_V1")
+        in_features = self.resnet50.fc.in_features
         #add fully connected layer
-        self.resnet34.fc = nn.Linear(in_features, num_classes)
+        self.resnet50.fc = nn.Linear(in_features, num_classes)
 
         # Dictionary to select activation function
         self.activations = {
@@ -109,7 +109,7 @@ class ResNet34(nn.Module):
         self.activation = self.activations.get(activation, nn.ReLU())
 
     def forward(self, x):
-        return self.resnet34(x)
+        return self.resnet50(x)
 
 
 
@@ -258,7 +258,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
             wandb.log({"resume": 0})
             wandb.log({"resume_fold": resume_fold})
             wandb.log({"job_path": model_output})
-            wandb.log({"MODEL": "ResNet34"})
+            wandb.log({"MODEL": "ResNet50"})
 
 
             hot_encode = 0
@@ -342,6 +342,11 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
 
             # Number of folds for cross-validation
             num_folds = 5  # You can adjust this based on your needs
+            # Use StratifiedKFold to maintain class distribution in each fold
+            #skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+            # Assuming full_dataset is the dataset you want to perform cdu -h --max-depth 1 cross-validation on
+            # You may replace it with the actual dataset variable you are using
             
             
             for fold in range(len(train_folds)):
@@ -353,7 +358,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     break
                 
                 classes = [0,1]
-                model = ResNet34(num_classes=len(classes), activation=activation)
+                model = ResNet50(num_classes=len(classes), activation=activation)
                 if optimizer == 'adam':
                     optimizer = optim.Adam(model.parameters(), lr=0.001)
                 elif optimizer == 'sgd':
@@ -436,11 +441,19 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     
                     #CHANGE - added wandb
                     wandb.log({"epochss": num_epochs, "batch_size": batch_size})
+                    #MODEL SAVE - COMMENT THIS PART
+                    ## To keep track of the accuracies to obtain the accuracy plots
+                    #train_accuracies = []
+                    #val_accuracies = []
+                    #train_losses = []
+                    #val_losses = []
 
                     dataloaders = {
-                        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ['train', 'val', 'test']
+                        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=8) for x in ['train', 'val', 'test']
                     }
                     
+
+                    print('FINISHED LOADERS')
                     # Create a temporary directory to save training checkpoints
                     tempdir = model_output  ###########CHANGE to model_output and remove "with" (indentation changes)
                         ###CHANGE deleted savings
@@ -471,6 +484,7 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                             for inputs, labels in dataloaders[phase]:
                                 inputs = inputs.to(device)
                                 labels = labels.to(device)
+                                #print('to device')
 
                                 # zero the parameter gradients
                                 optimizer.zero_grad()
@@ -487,7 +501,8 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                                         loss.backward()
                                         optimizer.step()
 
-                                    
+                                
+                                #print('finished training')
 
                                 # statistics
                                 running_loss += loss.item() * inputs.size(0)
@@ -506,6 +521,12 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                             epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
                             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+
+                            # CHANGE - commented below
+                            # deep copy the model
+                            #if phase == 'val' and epoch_acc > best_accuracy:
+                            #    best_accuracy = epoch_acc
+                            #    torch.save(model.state_dict(), best_model_params_path)
 
                             # Store accuracy for both training and validation
                             if phase == 'train':
@@ -626,6 +647,13 @@ def train_wrapper(study_a_participants, study_a_data_path, study_a_splits, model
                     """
                     BEGIN: Subplots for training and validation accuracy for varying batch_sizes
                     """
+                    # Adjust layout and save the figure for training & validation accuracy for varying batch_sizes
+                    #batch_size_results_path = model_output + 'batch_size_results/'
+
+                    #if not os.path.exists(batch_size_results_path):
+                    #    os.makedirs(batch_size_results_path)
+
+                   ###CHANGE - indentation change ends here
 
                     with open(f"{model_output}/results_output_log.txt", "a") as results_log_file:
                         results_log_file.write("\n")
@@ -700,10 +728,11 @@ def main():
 
         color_channel = "BGR" #CHECKKKKKKKKKKKKKKK
         data_frame_rate = 30
-        dataset_path = "../../../../data/final_study_data_BGR_30fps"
+        #dataset_path = "../../../../data/final_study_data_BGR_30fps"
+        dataset_path = "/scratch/neckface_image_data"
         output_directory = "../../../../data/training_outputs/"
         #MODEL SAVE
-        last_model_save_dir = output_directory + "model_data/" + "resnet34_30fps/"
+        last_model_save_dir = output_directory + "model_data/" + "resnet50_30fps/"
 
         ## Define the path for storing model outputs
         now = datetime.datetime.now()
@@ -721,7 +750,7 @@ def main():
 
         ## Define the path for storing model outputs
         now = datetime.datetime.now()
-        neckface_output_path = output_directory + f"resnet34_neckface_{data_frame_rate}_fps_" + now.strftime("%Y-%m-%d_%H-%M-%S") + '/'
+        neckface_output_path = output_directory + f"resnet50_neckface_{data_frame_rate}_fps_" + now.strftime("%Y-%m-%d_%H-%M-%S") + '/'
 
         if not os.path.exists(neckface_output_path):
             os.makedirs(neckface_output_path)
@@ -782,7 +811,7 @@ def main():
                 "optimizer": {"values": ['adam', 'sgd', 'adadelta']},
                 "step_size": {"values": [10,30,60]},
                 "gamma": {"values": [0.01, 0.1, 0.3]},
-                "batch_size": {"values": [32]},
+                "batch_size": {"values": [256]},
                 "activation": {"values": ['relu', 'leaky_relu', 'tanh', 'sigmoid']}
             },
         }  
