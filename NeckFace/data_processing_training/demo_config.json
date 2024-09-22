@@ -1,0 +1,26 @@
+{
+    "video": {
+        "files": [
+            "part1/part1.avi",
+            "part2/part2.avi",
+            "part3/part3.avi"
+        ],
+        "syncing_poses": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ground_truth": {
+        "files": [
+            "part1/ground_truth_raw_part1",
+            "part2/ground_truth_raw_part2",
+            "part3/ground_truth_raw_part3"
+        ],
+        "syncing_poses": [
+            0,
+            0,
+            0
+        ]
+    }
+}
