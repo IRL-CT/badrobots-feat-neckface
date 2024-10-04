@@ -1,10 +1,9 @@
-## Dataset pre-processing and extraction for Neckface
+## Dataset pre-processing and creation for NeckFace
 #### File Structure
 
 ```
 .
-├── README.md
-├── code_create_dataset
+├── code_create_datasets
 │   ├── neckface_device_recordings
 │   │   ├── convert_to_mp4.py
 │   │   ├── neckface_createDataset.py
@@ -17,6 +16,7 @@
 │   │   ├── openFace_features_downsampling.py
 │   │   └── openFace_neckFace_mapping.py
 │   └── study_metadata.ipynb
+│   └── README.md
 └── data
     ├── neckface_dataset
     │   ├── failureOccurrence_unix_timeStamp_mapping.xlsx
@@ -76,7 +76,7 @@
 
 #### Neckface Device Recordings Frame Extraction
 
-- Code Structure: `code_create_dataset/neckface_device_recordings`
+- Code Structure: `code_create_datasets/neckface_device_recordings`
 
 1. `convert_to_mp4.py`: Converts the `.avi` video files to `.mp4` - for easier extraction of frames using `cv2`
 1. `neckface_createDataset.py`: This script considers the timestamps from the neckface device and extracts all the frames from the neckface IR camera recording of the participant session recordings.
@@ -92,14 +92,14 @@
 
 #### Neckface Numerical Prediction Extraction
 
-- Code Structure: `code_create_dataset/neckface_device_recordings/`
+- Code Structure: `code_create_datasets/neckface_device_recordings/`
 
 1. `numerical_preds_extraction_through_timestamps.py`: This acts very similar to the Neckface Device Recordings Frame Extraction logic. Except, instead of extracting frames from the `{participant_id}_survey.avi` video file, it extracts the datapoints from the `preds` folder containing the `survey_preds.npy`.
 
 
 #### Neckface OpenFace Numerical Features Extraction
 
-- Code Structure: `code_create_dataset/neckface_openface_feature_extraction/`
+- Code Structure: `code_create_datasets/neckface_openface_feature_extraction/`
 
 1. `extract_openface_feature_files.py`: This script reads the OpenFace extraction output consists of the `hog, .avi, .csv, details.txt, and aligned` files. Extracts the `.csv` files which consist of the numerical prediction of the Facial Activation Units and moves it to the new directory for downsampling for features and frames.
 
@@ -114,7 +114,7 @@ It also reduces the number of features to match the features that of the NeckFac
 
 1. `neckface_extracted_study_data.zip`: Contains the `preds` files from the neckface device.
 1. `preds/`: The `participant_id/{survey}_preds.npy` files are manually selected and downloaded from the box. This contains the entire session recording's extracted numerical predicition from the neckface device.
-1. `pred_outputs/`: This contains the extracted numerical datapoints that fall within the ranges of the `[start, end]` unix timestamps of when the participant viewed a given stimulus_video. These datapoints are obtained by executing the `code_create_dataset/neckface_device_recordings/numerical_preds_extraction_through_timestamps.py` script.
+1. `pred_outputs/`: This contains the extracted numerical datapoints that fall within the ranges of the `[start, end]` unix timestamps of when the participant viewed a given stimulus_video. These datapoints are obtained by executing the `code_create_datasets/neckface_device_recordings/numerical_preds_extraction_through_timestamps.py` script.
 1. `neckface_device_recordings/`: This file consits of the `{participant_id}_survey.avi` video files that is manually selected and downloaded from the box.
 1. `participant_log.xlsx`: Used to determine whether a given participant's data is to be considered in the dataset creation depending on whether the participant is included in the final study or not.
 1. `failureOccurrence_unix_timeStamp_mapping.xlsx`: This `df` is read to obtain the unix timestamps of the `[start, end]` durations of each stimulus video viewed by the given participant.
