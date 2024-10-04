@@ -15,7 +15,6 @@
 │   │   ├── extract_openface_feature_files.py
 │   │   ├── openFace_features_downsampling.py
 │   │   └── openFace_neckFace_mapping.py
-│   └── study_metadata.ipynb
 │   └── README.md
 └── data
     ├── neckface_dataset
