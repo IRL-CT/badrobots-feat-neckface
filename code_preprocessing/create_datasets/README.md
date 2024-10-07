@@ -3,8 +3,8 @@
 
 ```
 .
-├── code_create_datasets
-│   ├── neckface_device_recordings
+├── create_datasets
+│   ├── neckface_rgb
 │   │   ├── convert_to_mp4.py
 │   │   ├── neckface_createDataset.py
 │   │   ├── neckface_survey_recordings_createDataset.py
@@ -40,7 +40,7 @@
     |       |..
     |       |..
     │       └── 9-selected
-    ├── neckface_openface_dataset
+    ├── neckface_openface_timeseries
     │   ├── 12_fps_downsampled_neckface_openface_dataset
     │   │   ├── 12_fps_all_participants_openface_neckface.csv
     │   │   ├── 12_fps_all_participants_openface_neckface.npy
@@ -75,7 +75,7 @@
 
 #### Neckface Device Recordings Frame Extraction
 
-- Code Structure: `code_create_datasets/neckface_device_recordings`
+- Code Structure: `create_datasets/neckface_rgb`
 
 1. `convert_to_mp4.py`: Converts the `.avi` video files to `.mp4` - for easier extraction of frames using `cv2`
 1. `neckface_createDataset.py`: This script considers the timestamps from the neckface device and extracts all the frames from the neckface IR camera recording of the participant session recordings.
@@ -91,14 +91,14 @@
 
 #### Neckface Numerical Prediction Extraction
 
-- Code Structure: `code_create_datasets/neckface_device_recordings/`
+- Code Structure: `create_datasets/neckface_rgb/`
 
 1. `numerical_preds_extraction_through_timestamps.py`: This acts very similar to the Neckface Device Recordings Frame Extraction logic. Except, instead of extracting frames from the `{participant_id}_survey.avi` video file, it extracts the datapoints from the `preds` folder containing the `survey_preds.npy`.
 
 
 #### Neckface OpenFace Numerical Features Extraction
 
-- Code Structure: `code_create_datasets/neckface_openface_feature_extraction/`
+- Code Structure: `create_datasets/neckface_openface_timeseries/`
 
 1. `extract_openface_feature_files.py`: This script reads the OpenFace extraction output consists of the `hog, .avi, .csv, details.txt, and aligned` files. Extracts the `.csv` files which consist of the numerical prediction of the Facial Activation Units and moves it to the new directory for downsampling for features and frames.
 

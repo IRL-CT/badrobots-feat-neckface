@@ -27,9 +27,6 @@ import datetime
 from sklearn.model_selection import ParameterGrid
 from TimeSeries_Helpers import *
 
-#wandb waittime
-
-
 
 
 param_grid_models = {'model': ['LSTM_FCN',"GRU_FCN", "InceptionTime","InceptionTimePlus","MiniRocket", "gMLP"]}
@@ -123,7 +120,7 @@ for i, grid_config in enumerate(param_grid):
                 oversampling=grid_config["oversampling"],
                 undersampling=False,
                 verbose=True,
-                dataset = "openface",
+                dataset = "neckface",
                 dataset_processing = grid_config["dataset_processing"]
             )
 
