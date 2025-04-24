@@ -17,6 +17,9 @@ from get_metrics import get_metrics
 
 from fastai.callback.core import Callback
 from fastai.metrics import accuracy, Precision, Recall, F1Score
+from sklearn.decomposition import PCA
+from collections import Counter
+from sklearn.utils import resample
 
 
 class MetricsCallback(Callback):
@@ -34,7 +37,6 @@ class MetricsCallback(Callback):
         "Store the metrics after each epoch"
         # Store training metrics
         self.values.append(self.learn.recorder.values)
-        
 
 def most_common(lst):
     '''
@@ -44,7 +46,9 @@ def most_common(lst):
     return max(lst, key=data.get)
 
 
-def create_single_label_per_interval_with_context(df, interval_length, stride, features, context_length):
+
+
+def create_single_label_per_interval_with_context(df, interval_length, stride, features, context_length, balanced=False):
     '''
     Splits data into intervals of length interval_length + contextlength. The label is based only on the last frames of length interval_length
     :param df: dataframe containing the gaze data and labels
@@ -56,6 +60,9 @@ def create_single_label_per_interval_with_context(df, interval_length, stride, f
     '''
     labels = np.empty(0)
     values = []
+    print('df columns in data prep', df.columns)    
+    
+    #print if df has nan values
     for i in range(0, len(df), stride):
         if i + interval_length + context_length <= len(df):
             interval_labels = list(
@@ -70,11 +77,156 @@ def create_single_label_per_interval_with_context(df, interval_length, stride, f
            
             values.append(sample)
 
-    return values, labels, df["class_label"]
+    #print('labels', labels)
+    # Count class distribution
+    class_counts = Counter(labels)
+    print("Original class distribution:", class_counts)
+    
+    # Determine minority class count
+    minority_class_count = min(class_counts.values())
+    
+    # Balance dataset
+    balanced_values = []
+    balanced_labels = []
+    
+    for clss in class_counts:
+        class_mask = [l == clss for l in labels]
+        class_samples = [values[j] for j in range(len(values)) if class_mask[j]]
+        class_labels = [labels[j] for j in range(len(labels)) if class_mask[j]]
+        
+        # Randomly select samples
+        resampled_indices = np.random.choice(
+            len(class_samples), 
+            size=minority_class_count, 
+            replace=False
+        )
+        
+        balanced_values.extend([class_samples[idx] for idx in resampled_indices])
+        balanced_labels.extend([class_labels[idx] for idx in resampled_indices])
+
+    #PRINT first element of balanced values
+    #print('BALANCED VALUES', balanced_values[0])
+    
+    print("Balanced class distribution:", Counter(balanced_labels))
+
+    if balanced:
+        return balanced_values, balanced_labels, df["class_label"]
+    else:
+        return values, labels, df["class_label"]
+
+# Select Modelities
+def modalities_combination_data_prep(modalities_combination_vec, X_train, X_train_vit, feature_set_tag):
+    selected_modalities_train = pd.DataFrame()
+    #print(X_train.columns)
+
+    stat_features = ['1','2','4','5','6','7','8','9','12','13','14','15','16',
+    '18','19','20','21','22','23','24','25','26','27','28','29','30','31','32',
+    '33','34','35','36','37','38','39','40','41','42','43','44','45','46',
+    '47','48','49','50','51','52','53','54','55']
+
+    impurity_features = ['24','27','25','28','40','48','29','49','41','26']
+    #print('Nan values pre modalities', X_train.isnull().sum())
+    
+    #selected_modalities_train = X_train.iloc[:, 5:]
+    selected_modalities_train = pd.DataFrame()
+    if modalities_combination_vec[0]: # face
+        cols_or =  selected_modalities_train.columns
+        selected_modalities_train = pd.concat([selected_modalities_train, X_train.iloc[:, 5:]], axis=1, ignore_index=True)
+
+        # selected_modalities_train = pd.concat([selected_modalities_train, X_train.iloc[:, 59:123]], axis=1, ignore_index=True)
+        # print(selected_modalities_train.shape)
+        # selected_modalities_train = pd.concat([selected_modalities_train, X_train.iloc[:, 177:241]], axis=1, ignore_index=True)
+        print(selected_modalities_train.shape)
+
+        #column names, concatenate 2 lists
+        #cols_names = X_train.columns[59:123] 
+        #cols_names = cols_names.append(X_train.columns[177:241])
+        cols_names = X_train.iloc[:, 5:]
+
+        print('COLS NAMES', cols_names)
+        cols = cols_or.append(cols_names)
+        selected_modalities_train.columns = cols
+        #print(selected_modalities_train.head())
+        print('ADDED AUDIO')
+    if modalities_combination_vec[1]: # vit
+
+        cols_or =  selected_modalities_train.columns
+        selected_modalities_train = pd.concat([selected_modalities_train, X_train_vit], axis=1, ignore_index=True)
+        print(selected_modalities_train.shape)
+        cols_names = X_train_vit.iloc[:, 5:].columns
+        print('COLS NAMES', cols_names)
+
+        cols = cols_or.append(cols_names)
+
+        selected_modalities_train.columns = cols
+        #print(selected_modalities_train.head())
+        print('ADDED FACE')
+
+    
+    cols = selected_modalities_train.columns
+    #reindex
+    #check for nan
+    print('NAN VALUES', selected_modalities_train.isnull().sum())
+    #remove rows with nan values
+    selected_modalities_train = selected_modalities_train.dropna()
+
+    selected_modalities_train = selected_modalities_train.reset_index(drop=True)
+
+    #make first 5 columns same as X_train
+    #columnsfirst = ['participant_id', 'stimulus_video_name','class_label','pred_type','0']
+    #columns_later = list(selected_modalities_train.columns[5:])
+    #all_cols = columnsfirst + columns_later
+    #selected_modalities_train.columns = all_cols
+
+       
+    if feature_set_tag == "Stat":
+        new_cols = [f for f in cols if f in stat_features]
+        #('new cols', new_cols)
+        #print(new_cols)
+        #now, select only the columns that are in the stat_features
+        new_selected_modalities_train = selected_modalities_train.loc[:, new_cols]
+        print(new_selected_modalities_train.shape)
+        selected_modalities_train = new_selected_modalities_train
+        print('ADDED STAT')
+        print(selected_modalities_train.columns)
+    elif feature_set_tag == "RF": #excluding MULTI
+        new_cols = [f for f in cols if f not in impurity_features]
+        #print(new_cols)
+        #now, select only the columns that are in the stat_features
+        new_selected_modalities_train = selected_modalities_train.loc[:, new_cols]
+        selected_modalities_train = new_selected_modalities_train
+        print('ADDED RF')
+        print(selected_modalities_train.columns)
+    else:
+        new_cols = [f for f in cols]
+        new_selected_modalities_train = selected_modalities_train.loc[:, new_cols]
+        selected_modalities_train = new_selected_modalities_train
+        print('ADDED ALL')
+        print(selected_modalities_train.columns) 
+
+    
+
+    return selected_modalities_train
+
+def apply_pca(df):
+    pca = PCA(n_components=0.9)
+    #check if there is nan
+    #print('NAN VALUES', df.isnull().sum())
+    df_pca = pca.fit_transform(df.iloc[:,5:])
+    df_pca = pd.DataFrame(df_pca)
+    #reset index
+    df_pca = df_pca.reset_index(drop=True)
+    df_pca = pd.concat([df.loc[:, ['participant_id', 'stimulus_video_name','class_label','pred_type','0']], df_pca], axis=1, ignore_index=True)
+    #create string with pc + number for features
+    df_pca.columns = ['participant_id', 'stimulus_video_name','class_label','pred_type','0'] + ['pc' + str(i) for i in range(1, df_pca.shape[1]-4)]
+    #remove nan values
+    df_pca = df_pca.dropna()
+
+    #df_pca.columns = ['pair_id', 'start_seconds', 'is_discomfort'] + list(df_pca.columns[3:])
+    return df_pca
 
 
-
-def read_in_data(df_name, threshold, interval_length, stride_train, stride_eval, features, valid_ids, test_ids, context_length):
+def read_in_data(df_name, threshold, interval_length, stride_train, stride_eval, features, valid_ids, test_ids, context_length, config):
     """
     reads in merged csvs: applies recompute_treshold() and create_single_label_per_interval
 
@@ -96,6 +248,7 @@ def read_in_data(df_name, threshold, interval_length, stride_train, stride_eval,
        28,  3,  4,  5,  6,  7,  8,  9]
     
     df = pd.read_csv(path)
+    df_vit = pd.read_csv('../../data/vit_features.csv')
     #transform participant ids to be in ascendent order from 0 to n_p
     participants_uniques = df['participant_id'].unique()
     dict_participant = {participants_uniques[i]: i for i in range(len(participants_uniques))}
@@ -104,7 +257,19 @@ def read_in_data(df_name, threshold, interval_length, stride_train, stride_eval,
     participants_uniques = df['participant_id'].unique()
     #print(participants_uniques)
 
+    feature_modalities = modalities_combination_data_prep(config.modalities_combination, df, df_vit, config.feature_set_tag)
+    print('FEATURE MODALITIES', feature_modalities.shape)
 
+
+    #print('FEATURE MODALITIES', feature_modalities.columns)
+    #select 3 cols of df_p
+    init_cols = df.loc[:, ['participant_id', 'stimulus_video_name','class_label','pred_type','0']]
+    df = pd.concat([init_cols, feature_modalities], axis=1, ignore_index=True)
+    #column names
+    df.columns = ['participant_id', 'stimulus_video_name','class_label','pred_type','0'] + list(feature_modalities.columns)
+    if config.dataset_processing == "pca":
+        df = apply_pca(df)
+        
     for i in participants_uniques:
         participant = i
         data[participant] = {}
@@ -121,18 +286,18 @@ def read_in_data(df_name, threshold, interval_length, stride_train, stride_eval,
     for p_number, participant in enumerate(data):
         if participant in valid_ids or participant in test_ids:
             values, labels, raw_labels = create_single_label_per_interval_with_context(
-                df=data[participant], interval_length=interval_length, stride=stride_eval, features=features, context_length=context_length)
+                df=data[participant], interval_length=interval_length, stride=stride_eval, features=features, context_length=context_length, balanced=config.balanced)
             lvl1_data.append((values, labels, raw_labels))
            
         else:
             values, labels, raw_labels = create_single_label_per_interval_with_context(
-                df=data[participant], interval_length=interval_length, stride=stride_train, features=features, context_length=context_length)
+                df=data[participant], interval_length=interval_length, stride=stride_train, features=features, context_length=context_length, balanced=config.balanced)
             lvl1_data.append((values, labels, raw_labels))
             
     return lvl1_data, data
 
 
-def dataPrep(df_name, threshold, interval_length, stride_train, stride_eval, train_ids, valid_ids, test_ids, use_lvl1, use_lvl2 , merge_labels, batch_size, batch_tfms, features, context_length, oversampling, undersampling, verbose=True):
+def dataPrep(df_name, threshold, interval_length, stride_train, stride_eval, train_ids, valid_ids, test_ids, use_lvl1, use_lvl2 , merge_labels, batch_size, batch_tfms, features, context_length, oversampling, undersampling,config, verbose=True):
     '''
     :param threshold: threshold for AoI
     :param interval_length: how many frames make up one datapoint
@@ -158,10 +323,15 @@ def dataPrep(df_name, threshold, interval_length, stride_train, stride_eval, tra
     #print('valid_ids', valid_ids)
     #print('test_ids', test_ids)
     lvl1, data = read_in_data(df_name = df_name, threshold=threshold, interval_length=interval_length,
-                                    stride_train=stride_train, stride_eval=stride_eval, features=features, valid_ids=valid_ids, test_ids=test_ids, context_length=context_length)
+                                    stride_train=stride_train, stride_eval=stride_eval, features=features, valid_ids=valid_ids, test_ids=test_ids, context_length=context_length, config=config)
 
+    #if data is none, return none
+    if data is None:
+        return None
 
     #print('lvl1', len(lvl1))
+    features = data.get(0).columns[5:]
+
     # prepare labels (1d array) and data (3D array) for TSAI
     X_train = np.empty(
         (0, len(features), interval_length+context_length), dtype=np.float64)
@@ -421,7 +591,7 @@ def evaluate_preds_against_raw(y_preds_per_participant, y_raw_per_participant, s
 def evaluate(config, group, name, valid_preds, y_val, test_preds, y_test, y_val_raw, y_test_raw, val_preds_per_participant, test_preds_per_participant):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     results = {}
-    if (len(config.valid_ids) > 0) and (len(config.valid_ids) != len(config.test_ids)):
+    if (len(config.valid_ids) > 0): #and (len(config.valid_ids) != len(config.test_ids)):
         results["val_accuracy"] = accuracy_score(y_val, valid_preds)
         cm_val = confusion_matrix(y_val, valid_preds)
         print(classification_report(y_val, valid_preds))
@@ -493,8 +663,12 @@ def train_miniRocket(config, group, name):
                                                                                                                                        context_length=config.context_length,
                                                                                                                                        verbose=config.verbose,
                                                                                                                                        oversampling=config.oversampling,
-                                                                                                                                       undersampling=config.undersampling)
-
+                                                                                                                                       undersampling=config.undersampling,
+                                                                                                                                       config = config)
+    
+    #if returns none, return none
+    if dls is None:
+        return None
     # model and train
     model = MiniRocketVotingClassifier(n_estimators=config.n_estimators)
     model.fit(X_train, y_train)
@@ -547,8 +721,11 @@ def train_fastAI(config, group, name):
                                                                                                                                        verbose=config.verbose,
                                                                                                                                        context_length=config.context_length,
                                                                                                                                        oversampling=config.oversampling,
-                                                                                                                                       undersampling=config.undersampling)
-
+                                                                                                                                       undersampling=config.undersampling,
+                                                                                                                                       config = config)
+    #if returns none, return none
+    if dls is None:
+        return None
     # model and train
     cbs = None
     learn = load_config_model(config=config, dls=dls, cbs=cbs)
@@ -582,7 +759,7 @@ def train_fastAI(config, group, name):
 
 
     # evaluate
-    if len(config.valid_ids) > 0 and len(config.valid_ids) != len(config.test_ids):
+    if len(config.valid_ids) > 0:# and len(config.valid_ids) != len(config.test_ids):
         valid_probas, valid_targets= learn.get_X_preds(
             X_val, y_val, with_decoded=False)  # don't use the automatic decoding, there is a bug in the tsai library
         #print('VALIDATION SET')
@@ -649,15 +826,16 @@ def cross_validate(val_fold_size, config, group, name):
         if hasattr(config, 'dataset_processing'):
 
             dataset_processing = config.dataset_processing
-            if dataset_processing == "norm":
+            
+
+            if (dataset_processing == "norm") or (dataset_processing == "pca"):
                 df = pd.read_csv("../../data/training_data_norm.csv")
                 df_name = "training_data_norm.csv"
-            elif dataset_processing == "pca":
-                df = pd.read_csv("../../data/training_data_pca.csv")
-                df_name = "training_data_pca.csv"
+                config.df_name = df_name
             else:
                 df = pd.read_csv("../../data/training_data.csv")
                 df_name = "training_data.csv"
+                config.df_name = df_name
         else:
             df = pd.read_csv("../../data/"+config.df_name)
 
@@ -688,6 +866,8 @@ def cross_validate(val_fold_size, config, group, name):
 
         # iterate over folds
         for i in range(len(train_folds)):
+            # Clear GPU memory before each fold
+            torch.cuda.empty_cache()
             train_ids = train_folds[i]
             valid_ids = val_folds[i]
             config.train_ids = train_ids
@@ -703,17 +883,24 @@ def cross_validate(val_fold_size, config, group, name):
             else:
                 model, results, train_metrics, results_val, results_test = train_fastAI(
                     config=config, group=group, name="_iteration"+str(i)+"_var"+name)
+
+            #if model is none, throw error
+            if model is None:
+                raise ValueError("Model is None")
+            #delete the model from memory
+            del model
+            # gc.collect()
+            torch.cuda.empty_cache()   
             train_metrics_all.append(train_metrics)
             val_metrics_all.append(results_val)
             test_metrics_all.append(results_test)
             results_all.append(results)
 
-
+            
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # , settings=wandb.Settings(start_method="fork")):
         dataset = config.dataset
-        with wandb.init(project=f"minirocket4_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
-
+        with wandb.init(project=f"minirocket2_2025_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
             for i in range(len(train_metrics_all)):
                 #get metrics all for fold 0
                 train_0 = train_metrics_all[i]
@@ -778,12 +965,10 @@ def cross_validate(val_fold_size, config, group, name):
             #log all the attributes in config
             for key in config.keys():
                 wandb.log({key: str(config[key])})
-
-
     except Exception as e:
         dataset = config.dataset
         print(e)
-        with wandb.init(project=f"minirocket4_{dataset}", config=config, group="error-"+group, name=group):
+        with wandb.init(project=f"minirocket2_2025_{dataset}", config=config, group="error-"+group, name=group):
 
             wandb.log({"Error": str(e)})
             for key in config.keys():
@@ -858,6 +1043,8 @@ def cross_validate_bestepoch(val_fold_size, config, group, name):
 
         # iterate over folds
         for i in range(len(train_folds)):
+            # Clear GPU memory before each fold
+            torch.cuda.empty_cache()
             train_ids = train_folds[i]
             valid_ids = val_folds[i]
             config.train_ids = train_ids
@@ -873,6 +1060,7 @@ def cross_validate_bestepoch(val_fold_size, config, group, name):
             else:
                 model, results, train_metrics, results_val, results_test = train_fastAI(
                     config=config, group=group, name="_iteration"+str(i)+"_var"+name)
+            torch.cuda.empty_cache()        
             train_metrics_all.append(train_metrics)
             val_metrics_all.append(results_val)
             test_metrics_all.append(results_test)
@@ -882,7 +1070,7 @@ def cross_validate_bestepoch(val_fold_size, config, group, name):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # , settings=wandb.Settings(start_method="fork")):
         dataset = config.dataset
-        with wandb.init(project=f"minirocket3_bestepoch_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
+        with wandb.init(project=f"minirocket2_2025_bestepoch_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
 
 
             avg_valid_acc = []
@@ -999,11 +1187,10 @@ def cross_validate_bestepoch(val_fold_size, config, group, name):
                 wandb.log({key: str(config[key])})
 
 
-
     except Exception as e:
         dataset = config.dataset
         print(e)
-        with wandb.init(project=f"minirocket3_bestepoch_{dataset}", config=config, group="error-"+group, name=group):
+        with wandb.init(project=f"minirocket2_2025_bestepoch_{dataset}", config=config, group="error-"+group, name=group):
 
             wandb.log({"Error": str(e)})
             for key in config.keys():
@@ -1068,10 +1255,14 @@ def cross_validate_bestmodel(val_fold_size, config, group, name):
 
 
         train_folds, val_folds, test_folds = create_data_splits_ids(df)
-
+        #print("Train Folds:", train_folds)
+        #print("Val Folds:", val_folds)
+        #print("Test Folds:", test_folds)
 
         # iterate over folds
         for i in range(len(train_folds)):
+            torch.cuda.empty_cache()
+
             train_ids = train_folds[i]
             valid_ids = val_folds[i]
             config.train_ids = train_ids
@@ -1088,6 +1279,7 @@ def cross_validate_bestmodel(val_fold_size, config, group, name):
                 model, results, train_metrics, results_val, results_test = train_fastAI_save(
                     config=config, group=group, name="_iteration"+str(i)+"_var"+name)
             #f1_scores.append(results["val_macroF1"])
+            torch.cuda.empty_cache()    
             train_metrics_all.append(train_metrics)
             val_metrics_all.append(results_val)
             test_metrics_all.append(results_test)
@@ -1097,7 +1289,7 @@ def cross_validate_bestmodel(val_fold_size, config, group, name):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # , settings=wandb.Settings(start_method="fork")):
         dataset = config.dataset
-        with wandb.init(project=f"minirocket3_bestmodel_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
+        with wandb.init(project=f"minirocket2_2025_bestmodel_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
 
 
             avg_valid_acc = []
@@ -1187,7 +1379,7 @@ def cross_validate_bestmodel(val_fold_size, config, group, name):
     except Exception as e:
         dataset = config.dataset
         print(e)
-        with wandb.init(project=f"minirocket3_bestmodel_{group}_{dataset}", config=config, group="error-"+group, name=group):
+        with wandb.init(project=f"minirocket2_2025_bestmodel_{group}_{dataset}", config=config, group="error-"+group, name=group):
 
             wandb.log({"Error": str(e)})
             for key in config.keys():
@@ -1342,7 +1534,7 @@ def train_fastAI_save(config, group, name):
 
 
     # evaluate
-    if len(config.valid_ids) > 0 and len(config.valid_ids) != len(config.test_ids):
+    if len(config.valid_ids) > 0 :#and len(config.valid_ids) != len(config.test_ids):
         valid_probas, valid_targets= learn.get_X_preds(
             X_val, y_val, with_decoded=False)  # don't use the automatic decoding, there is a bug in the tsai library
         #print('VALIDATION SET')
@@ -1529,8 +1721,9 @@ def train_fastAI_pretrain(config, group, name):
 
 
 
+
     print(learn.summary())
-    
+
 
 
     learn.fit_one_cycle(config.n_epoch, config.lr)
@@ -1581,14 +1774,15 @@ def train_fastAI_pretrain(config, group, name):
 
     # evaluate
     print('evaluating')
-    if len(config.valid_ids) > 0 and len(config.valid_ids) != len(config.test_ids):
+    if len(config.valid_ids) > 0:# and len(config.valid_ids) != len(config.test_ids):
         print(X_val.shape, y_val.shape)
         valid_probas, valid_targets= learn.get_X_preds(
             X_val, y_val, with_decoded=False)  # don't use the automatic decoding, there is a bug in the tsai library
         print('VALIDATION SET')
 
         #print(valid_probas)
-        #print(valid_targets)
+        #
+        # print(valid_targets)
         #print(valid_preds0)
         valid_preds = [learn.dls.vocab[p]
                        for p in np.argmax(valid_probas, axis=1)]
@@ -2002,6 +2196,9 @@ def cross_validate_pretrained(val_fold_size, config, group, name):
 
         # iterate over folds
         for i in range(len(train_folds)):
+            # Clear GPU memory before each fold
+            torch.cuda.empty_cache()
+
             train_ids = train_folds[i]
             valid_ids = val_folds[i]
             config.train_ids = train_ids
@@ -2017,6 +2214,7 @@ def cross_validate_pretrained(val_fold_size, config, group, name):
             else:
                 model, results, train_metrics, results_val, results_test = train_fastAI_pretrain(
                     config=config, group=group, name="_iteration"+str(i)+"_var"+name)
+            torch.cuda.empty_cache()
             #f1_scores.append(results["val_macroF1"])
             train_metrics_all.append(train_metrics)
             val_metrics_all.append(results_val)
@@ -2027,7 +2225,7 @@ def cross_validate_pretrained(val_fold_size, config, group, name):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # , settings=wandb.Settings(start_method="fork")):
         dataset = config.dataset
-        with wandb.init(project=f"minirocket3_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
+        with wandb.init(project=f"minirocket2_2025_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
 
 
             avg_valid_acc = []
@@ -2146,7 +2344,7 @@ def cross_validate_pretrained(val_fold_size, config, group, name):
     except Exception as e:
         dataset = config.dataset
         print(e)
-        with wandb.init(project=f"minirocket3_{group}_{dataset}", config=config, group="error-"+group, name=group):
+        with wandb.init(project=f"minirocket2_2025_{group}_{dataset}", config=config, group="error-"+group, name=group):
 
             wandb.log({"Error": str(e)})
             for key in config.keys():
@@ -2208,6 +2406,8 @@ def cross_validate_pp(val_fold_size, config, group, name):
         df['participant_id'] = df['participant_id'].map(dict_participant)
         #print(df['participant_id'].unique())
 
+
+
         # iterate over folds
         for i in range(len(participants_uniques)):
 
@@ -2217,6 +2417,8 @@ def cross_validate_pp(val_fold_size, config, group, name):
             else:
                 model, results, train_metrics, results_val, results_test = train_fastAI_pp(participant = i,
                     config=config, group=group, name="_iteration"+str(i)+"_var"+name)
+
+            torch.cuda.empty_cache()
 
             train_metrics_all.append(train_metrics)
             val_metrics_all.append(results_val)
@@ -2228,7 +2430,7 @@ def cross_validate_pp(val_fold_size, config, group, name):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # , settings=wandb.Settings(start_method="fork")):
         dataset = config.dataset
-        with wandb.init(project=f"minirocket3_pp_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
+        with wandb.init(project=f"minirocket2_2025_pp_{group}_{dataset}", config=config, group="summary-"+group, name=now+"_"+group):
 
             avg_valid_acc = []
             avg_test_acc = []
@@ -2336,7 +2538,7 @@ def cross_validate_pp(val_fold_size, config, group, name):
     except Exception as e:
         dataset = config.dataset
         print(e)
-        with wandb.init(project=f"minirocket3_pp_{group}_{dataset}", config=config, group="error-"+group, name=group):
+        with wandb.init(project=f"minirocket2_2025_pp_{group}_{dataset}", config=config, group="error-"+group, name=group):
 
             wandb.log({"Error": str(e)})
             for key in config.keys():
@@ -2350,6 +2552,7 @@ def train_fastAI_pp(participant, config, group, name):
     #if len(config.valid_ids) == 0:
     #    config.valid_ids = config.test_ids
     # prepare data
+    print('now')
     dls, X_train, y_train, X_val, y_val, X_test, y_test = dataPrep_pp(df_name = config.df_name,
                                                                     participant = participant,
                                                                     participant_minimum=config.participant_minimum,
@@ -2366,7 +2569,8 @@ def train_fastAI_pp(participant, config, group, name):
                                                                     verbose=config.verbose,
                                                                     context_length=config.context_length,
                                                                     oversampling=config.oversampling,
-                                                                    undersampling=config.undersampling)
+                                                                    undersampling=config.undersampling,
+                                                                    config=config)
 
     # model and train
     cbs = None
@@ -2421,7 +2625,7 @@ def train_fastAI_pp(participant, config, group, name):
 
 
 
-def dataPrep_pp(df_name, participant, participant_minimum, threshold, interval_length, stride_train, stride_eval, use_lvl1, use_lvl2 , merge_labels, batch_size, batch_tfms, features, context_length, oversampling, undersampling, verbose=True):
+def dataPrep_pp(df_name, participant, participant_minimum, threshold, interval_length, stride_train, stride_eval, use_lvl1, use_lvl2 , merge_labels, batch_size, batch_tfms, features, context_length, oversampling, undersampling,config=config, verbose=True):
     '''
     :param threshold: threshold for AoI
     :param interval_length: how many frames make up one datapoint
@@ -2447,11 +2651,14 @@ def dataPrep_pp(df_name, participant, participant_minimum, threshold, interval_l
     #print('valid_ids', valid_ids)
     #print('test_ids', test_ids)
     lvl1, data = read_in_data_pp(df_name = df_name, participant = participant, participant_minimum = participant_minimum, threshold=threshold, interval_length=interval_length,
-                                    stride_train=stride_train, stride_eval=stride_eval, features=features, context_length=context_length)
+                                    stride_train=stride_train, stride_eval=stride_eval, features=features, context_length=context_length, config=config)
 
 
     #print('lvl1', len(lvl1))
     # prepare labels (1d array) and data (3D array) for TSAI
+    features = data['train'].columns[5:]
+    print('FEATURES')
+    print(features)
     X_train = np.empty(
         (0, len(features), interval_length+context_length), dtype=np.float64)
     X_val = np.empty((0, len(features),
@@ -2532,7 +2739,7 @@ def dataPrep_pp(df_name, participant, participant_minimum, threshold, interval_l
     print(dls.c)
     return dls, X_train, y_train, X_val, y_val, X_test, y_test
 
-def read_in_data_pp(df_name, participant, participant_minimum, threshold, interval_length, stride_train, stride_eval, features, context_length):
+def read_in_data_pp(df_name, participant, participant_minimum, threshold, interval_length, stride_train, stride_eval, features, context_length, config):
     """
     reads in merged csvs: applies recompute_treshold() and create_single_label_per_interval
 
@@ -2554,6 +2761,7 @@ def read_in_data_pp(df_name, participant, participant_minimum, threshold, interv
     #   28,  3,  4,  5,  6,  7,  8,  9]
     
     df = pd.read_csv(path)
+    df_vit = pd.read_csv("../../data/vit_features.csv")
     #transform participant ids to be in ascendent order from 0 to n_p
     participants_uniques = df['participant_id'].unique()
     dict_participant = {participants_uniques[i]: i for i in range(len(participants_uniques))}
@@ -2564,8 +2772,17 @@ def read_in_data_pp(df_name, participant, participant_minimum, threshold, interv
 
     #select only data for participant
     df_p = df[df["participant_id"] == participant]
+    df_vit_p = df_vit[df_vit["participant_id"] == participant]
     #shuffle the rows
     df_p = df_p.sample(frac=1).reset_index(drop=True)
+    feature_modalities = modalities_combination_data_prep(config.modalities_combination, df_p, df_vit_p, config.feature_set_tag)
+
+    init_cols = df_p.loc[:, ['participant_id', 'stimulus_video_name','class_label','pred_type','0']]
+    df_p = pd.concat([init_cols, feature_modalities], axis=1, ignore_index=True)
+    #column names
+    df_p.columns = ['participant_id', 'stimulus_video_name','class_label','pred_type','0'] + list(feature_modalities.columns)
+    if config.dataset_processing == "pca":
+        df = apply_pca(df_p)
    
 
     #data[participant]= df_p
@@ -2592,6 +2809,8 @@ def read_in_data_pp(df_name, participant, participant_minimum, threshold, interv
     print('train',len(lvl1_data[0][0]))
     print('val',len(lvl1_data[1][0]))
     print('test',len(lvl1_data[2][0]))
+    print(data['train'].shape)
+
     return lvl1_data, data
 
 

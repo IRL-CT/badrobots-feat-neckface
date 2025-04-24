@@ -26,32 +26,45 @@ from create_data_splits import create_data_splits, create_data_splits_ids
 import datetime
 from sklearn.model_selection import ParameterGrid
 from TimeSeries_Helpers import *
+from itertools import product
 
+
+# Generate all combinations of 4 modalities in Boolean
+modalities_combinations = list(product([True, False], repeat=2)) # ['face', 'vit']
+modalities_combinations = [comb for comb in modalities_combinations if any(comb)] # remove all False combination
 
 
 param_grid_models = {'model': ['LSTM_FCN',"GRU_FCN", "InceptionTime","InceptionTimePlus","MiniRocket", "gMLP"]}
 
-param_grid_lstm = {'n_epoch': [200],
+param_grid_lstm = {'n_epoch': [150],
               'dropout_LSTM_FCN': [0,0.8,0.2,0.5],
               'fc_dropout_LSTM_FCN': [0, 0.2,0.5,0.8],
-              'n_estimators': [40,20,80],
-              'stride_train': [1,5, 10, 30,80],
-              'stride_eval': [1,5, 10, 30,80],
+              'n_estimators': [40,100,200],
+              'stride_train': [5, 10, 30,50,80],
+              'stride_eval': [5, 10, 30,50,80],
               'lr': [2e-4,0.01,0.001],
               'focal_loss': [False, True],
               "interval_length": [1,5, 12, 25, 40, 80],
               "context_length": [0],
               'oversampling': [False],
-              "batch_size": [128, 256],
+              "batch_size": [128,256],
               "batch_tfms": [None],
-              "dataset_processing": ["norm", "pca", "n.a."]
+              "dataset_processing":["pca", "norm", "clean"],
+              "feature_set_tag": ["Full"],
+              "balanced": [True,False],
+              "modalities_combination": modalities_combinations,
+              #"part_fusion": ['early','intermediate','late'],
+              #"groundtruth": ['sign', 'multi'],
+
               }
+
 
 
 #merge both
 param_grid = {**param_grid_models, **param_grid_lstm}
 
 print(param_grid)
+
 
 param_grid = list(ParameterGrid(param_grid))
 
@@ -68,11 +81,11 @@ df_name = 'training_data.csv'
 #remove configs were stride is bigger than the interval length
 new_param_grid = []
 for i,grid_config in enumerate(param_grid):
-    if grid_config["stride_train"] > grid_config["interval_length"] or grid_config["stride_eval"] > grid_config["interval_length"]:
+    if not (grid_config["stride_train"] > grid_config["interval_length"] or grid_config["stride_eval"] > grid_config["interval_length"]):
         #print("Removed config: ", grid_config)
         #param_grid.remove(grid_config)
-        print('removed')
-    else:
+        #print('removed')
+    #else:
         new_param_grid.append(grid_config)
 
 param_grid = new_param_grid
@@ -121,14 +134,16 @@ for i, grid_config in enumerate(param_grid):
                 undersampling=False,
                 verbose=True,
                 dataset = "neckface",
-                dataset_processing = grid_config["dataset_processing"]
+                dataset_processing = grid_config["dataset_processing"],
+                feature_set_tag=grid_config["feature_set_tag"],
+                modalities_combination = grid_config["modalities_combination"],
+                balanced = grid_config["balanced"],
+                #label = grid_config["label"],
+                #embedding_type = grid_config["embedding_type"]
+                #part_fusion = grid_config["part_fusion"],
+                #groundtruth = grid_config["groundtruth"],
+                
             )
 
             cross_validate(val_fold_size=5, config=config,
                         group="all", name=str(grid_config))
-
-
-
-
-
-
