@@ -8,6 +8,8 @@ import random
 #no warnings
 import warnings
 warnings.filterwarnings('ignore')
+from tensorflow.keras.utils import to_categorical
+
 
 
 #def create_sequences(data, target, sequence_length):
@@ -36,6 +38,8 @@ def create_sequences(data, target, sessions, sequence_length, hot_encode = 1):
     #hot one encode the target
     if hot_encode == 1:
         targets = pd.get_dummies(targets).values
+    else:
+        targets = to_categorical(targets, num_classes = 2)
 
         
     return np.array(sequences), np.array(targets)
@@ -124,7 +128,7 @@ def createDataSplits(df, fold_no, with_val = 1, hot_encode = 1, label_column = '
 
 
             if with_val == 1:
-                num_test = int(np.floor(0.2*len(fold_sessions)))
+                num_test = int(np.ceil(0.2*len(fold_sessions)))
                 num_val = int(np.ceil(0.1*len(fold_sessions)))
                 num_train = int(len(fold_sessions) - num_test - num_val)
 
@@ -133,7 +137,6 @@ def createDataSplits(df, fold_no, with_val = 1, hot_encode = 1, label_column = '
 
 
                 # Initialize lists to store train, validation, and test participants for each fold
-                train_folds = []
                 val_folds = []
                 test_folds = []
 
@@ -337,13 +340,14 @@ def createDataSplitsTransformer(df, fold_no, with_val = 1, label_column = 'class
             
             fold_sessions = df['participant_id'].unique()
             print('FOLD SESSIONS:', fold_sessions)
+            num_fold_sessions = len(fold_sessions)
 
             #get number of participants per fold
 
 
             if with_val == 1:
-                num_test = int(np.floor(0.2*len(fold_sessions)))
-                num_val = int(np.ceil(0.1*len(fold_sessions)))
+                num_val = int(np.floor(0.2*len(fold_sessions)))
+                num_test = int(np.ceil(0.1*len(fold_sessions)))
                 num_train = int(len(fold_sessions) - num_test - num_val)
 
        
@@ -357,28 +361,32 @@ def createDataSplitsTransformer(df, fold_no, with_val = 1, label_column = 'class
 
                 # Create non-overlapping test folds and validation folds
                 for i in range(num_folds):
-                    start_test_idx = i * num_test
-                    end_test_idx = start_test_idx + np.min([num_test, len(fold_sessions) - start_test_idx])
-
-                    test_fold = fold_sessions[start_test_idx:end_test_idx]
-                    #print('test_fold:', test_fold)
-                        
-                    # Identify all the participants except the participants belonging to the test_fold & shuffle them
-                    remaining_participants = np.setdiff1d(fold_sessions, test_fold)
-                    np.random.shuffle(remaining_participants)
+                    # For validation set, take consecutive 20% slice, wrap around if needed
+                    val_start = (i * num_val) % num_fold_sessions
+                    if val_start + num_val <= num_fold_sessions:
+                        val_fold = fold_sessions[val_start:val_start + num_val]
+                    else:
+                        # Wrap around for validation set
+                        val_fold = np.concatenate((
+                            fold_sessions[val_start:],
+                            fold_sessions[:num_val - (num_fold_sessions - val_start)]
+                        ))
                     
-                    # Validation set selected from the remaining participants
-                    val_fold = remaining_participants[:num_val]
-                    #print('val_fold:', val_fold)
+                    # For test set, take next consecutive 10% slice, wrap around if needed
+                    test_start = (val_start + num_val) % num_fold_sessions
+                    if test_start + num_test <= num_fold_sessions:
+                        test_fold = fold_sessions[test_start:test_start + num_test]
+                    else:
+                        # Wrap around for test set
+                        test_fold = np.concatenate((
+                            fold_sessions[test_start:],
+                            fold_sessions[:num_test - (num_fold_sessions - test_start)]
+                        ))
                     
-                    # Identify all the participants that don't belong to 'val_fold' & 'test_fold' and assign them to the 'train_fold'
-                    train_fold = np.setdiff1d(remaining_participants, val_fold)
-                    #print('train_fold:', train_fold)
-                    
-                    # Append the participant sets to their corresponding folds
-                    train_folds.append(train_fold)
                     val_folds.append(val_fold)
                     test_folds.append(test_fold)
+
+                print('folds', val_folds, test_folds)
                 
                 
                 """
@@ -387,10 +395,14 @@ def createDataSplitsTransformer(df, fold_no, with_val = 1, label_column = 'class
 
                 # # Create train, validation, and test sets for each fold in 'num_folds'
                 # For now, do only for fold: '0'
-                train_fold = train_folds[fold_no]
+                #train_fold = train_folds[fold_no]
                 val_fold = val_folds[fold_no]
                 test_fold = test_folds[fold_no]
-                print('folds:', train_fold,val_fold,test_fold)
+                #print('folds:', train_fold,val_fold,test_fold)
+                 # Train participants are all remaining participants
+                train_fold = np.setdiff1d(len(fold_sessions), 
+                                                np.concatenate((val_fold, test_fold)))
+
 
 
               
@@ -476,6 +488,7 @@ def createDataSplitsTransformer(df, fold_no, with_val = 1, label_column = 'class
 
             print('got here')
 
+            
             # Create sequences for LSTM
             X_train_sequences, y_train_sequences = create_sequences_nooh(X_train.values, y_train, session_train, sequence_length)
             if with_val == 1:
@@ -487,6 +500,11 @@ def createDataSplitsTransformer(df, fold_no, with_val = 1, label_column = 'class
                 y_val = None
                 
             X_test_sequences, y_test_sequences = create_sequences_nooh(X_test.values, y_test, session_test, sequence_length)
+
+            #make categorical
+            y_train= to_categorical(y_train, num_classes=2)
+            y_val= to_categorical(y_train, num_classes=2)
+            y_test= to_categorical(y_train, num_classes=2)
 
             #
             print('X_train_sequences:', X_train_sequences.shape, y_train_sequences.shape)

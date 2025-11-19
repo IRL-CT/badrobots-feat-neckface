@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>"Why the face?" - Robot Error Detection Using Instrumented Bystander Reactions</title>
+    <meta name="description" content="Exploring robot error detection through human facial reactions captured by a novel neck-mounted device.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .authors {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .authors a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .authors a:hover {
+            border-bottom-color: white;
+        }
+
+        .affiliations {
+            font-size: 0.95em;
+            margin-bottom: 25px;
+            opacity: 0.95;
+        }
+
+        .links {
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 5px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        section {
+            padding: 60px 0;
+        }
+
+        section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .abstract {
+            font-size: 1.1em;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: justify;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .card li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .figure {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .figure-caption {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .results-table {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .citation {
+            background: #f8f9fa;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .stat {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .authors {
+                font-size: 1em;
+            }
+
+            section {
+                padding: 40px 0;
+            }
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            max-width: 800px;
+            margin: 30px auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>"Why the face?"</h1>
+            <h2 style="font-size: 1.3em; font-weight: 400; margin-bottom: 30px;">Exploring Robot Error Detection Using Instrumented Bystander Reactions</h2>
+
+            <div class="authors">
+                <a href="https://www.mariateresaparreira.com/" target="_blank">Maria Teresa Parreira</a><sup>1,2</sup>,
+                <a href="https://www.ruidongzhang.com/" target="_blank">Ruidong Zhang</a><sup>1</sup>,
+                <a href="https://www.sukruthgl.com/" target="_blank">Sukruth Gowdru Lingaraju</a><sup>2</sup>,
+                <a href="https://alexbremers.com/" target="_blank">Alexandra Bremers</a><sup>2</sup>,
+                Xuanyu Fang<sup>2</sup>,<br>
+                <a href="https://www.ramirez-aristizabal.com/" target="_blank">Adolfo Ramirez-Aristizabal</a><sup>3</sup>,
+                <a href="https://homes.cs.washington.edu/~manaswi/" target="_blank">Manaswi Saha</a><sup>3</sup>,
+                <a href="https://www.kuniavsky.com/" target="_blank">Michael Kuniavsky</a><sup>3</sup>,
+                <a href="https://www.chengzhang.org/" target="_blank">Cheng Zhang</a><sup>1</sup>,
+                <a href="https://wendyju.com/" target="_blank">Wendy Ju</a><sup>1,2</sup>
+            </div>
+
+            <div class="affiliations">
+                <sup>1</sup>Cornell University &nbsp;|&nbsp;
+                <sup>2</sup>Cornell Tech &nbsp;|&nbsp;
+                <sup>3</sup>Accenture Labs
+            </div>
+
+            <div class="links">
+                <a href="../submission/main.pdf" class="btn" target="_blank">📄 Paper</a>
+                <a href="../submission/supp_material.pdf" class="btn btn-secondary" target="_blank">📊 Supplementary</a>
+                <a href="https://github.com/yourusername/badrobots-feat-neckface" class="btn btn-secondary" target="_blank">💻 Code</a>
+            </div>
+        </div>
+    </header>
+
+    <section>
+        <div class="container">
+            <div class="figure">
+                <img src="https://github.com/user-attachments/assets/a898c13e-4acc-45e9-a4c3-a1361067b23d" alt="Study Overview">
+                <p class="figure-caption">Figure 1: Overview of our system. Participants wear NeckFace while watching videos, their reactions are captured and processed through NeckNet-18 to reconstruct 3D facial expressions, which then train error detection models.</p>
+            </div>
+        </div>
+    </section>
+
+    <section style="background: white;">
+        <div class="container">
+            <h2>Abstract</h2>
+            <div class="abstract">
+                <p>How do humans recognize and rectify social missteps? We achieve social competence by looking around at our peers, decoding subtle cues from bystanders — a raised eyebrow, a laugh — to evaluate the environment and our actions. Robots, however, struggle to perceive and make use of these nuanced reactions.</p>
+
+                <p style="margin-top: 20px;">By employing a novel <span class="highlight">neck-mounted device</span> that records facial expressions from the chin region, we explore the potential of previously untapped data to capture and interpret human responses to robot error. First, we develop <span class="highlight">NeckNet-18</span>, a 3D facial reconstruction model to map the reactions captured through the chin camera onto facial points and head motion. We then use these facial responses to develop a robot error detection model which <span class="highlight">outperforms standard methodologies</span> such as using OpenFace or video data, generalizing well both for within- and across-participant data.</p>
+
+                <p style="margin-top: 20px;">Through this work, we argue for expanding human-in-the-loop robot sensing, fostering more seamless integration of robots into diverse human environments, pushing the boundaries of social cue detection and opening new avenues for adaptable and sustainable robotics.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2>Key Contributions</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>🎯 NeckNet-18</h3>
+                    <p>A lightweight 3D facial reconstruction model (ResNet-18 based) that converts IR camera data from a neck-mounted device into:</p>
+                    <ul>
+                        <li>52 facial Blendshape parameters</li>
+                        <li>3 head rotation angles</li>
+                        <li>Real-time performance</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Error Detection Models</h3>
+                    <p>Machine learning models that detect robot errors from human facial reactions:</p>
+                    <ul>
+                        <li><strong>84.7%</strong> accuracy with only 5% training data</li>
+                        <li><strong>5%</strong> better than OpenFace methods</li>
+                        <li>Superior to RGB camera approaches</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔬 Comprehensive Benchmark</h3>
+                    <p>First systematic comparison of neck-mounted device data against conventional methods:</p>
+                    <ul>
+                        <li>NeckFace IR cameras</li>
+                        <li>OpenFace features</li>
+                        <li>RGB camera data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section style="background: white;">
+        <div class="container">
+            <h2>System Architecture</h2>
+
+            <div class="figure">
+                <img src="../submission/FIGURE_setup.png" alt="Study Setup" style="max-width: 70%;">
+                <p class="figure-caption">Figure 2: Study setup showing the calibration and stimulus rounds. Participants wear NeckFace while watching stimulus videos, with reactions recorded by both the neck-mounted IR cameras and a frontal RGB camera.</p>
+            </div>
+
+            <div style="max-width: 900px; margin: 40px auto;">
+                <h3 style="color: #667eea; margin-bottom: 20px;">Two-Stage Pipeline</h3>
+
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: #333; margin-bottom: 10px;">Stage 1: NeckNet-18 (3D Facial Reconstruction)</h4>
+                    <p>Converts IR camera images from NeckFace device into 3D facial expressions. Requires a short calibration round (~5 minutes) where participants copy facial movements displayed on an iPhone with TrueDepth camera.</p>
+                </div>
+
+                <div>
+                    <h4 style="color: #333; margin-bottom: 10px;">Stage 2: Error Detection Model</h4>
+                    <p>Trained on reconstructed facial reactions to detect errors in robot (or human) actions. Supports both cross-participant generalization and single-participant personalization with minimal data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2>Results</h2>
+
+            <div class="results-table">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Error Detection Performance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model Type</th>
+                            <th>Dataset</th>
+                            <th>Accuracy</th>
+                            <th>F1-Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: #e6f2ff;">
+                            <td><strong>GRU_FCN</strong></td>
+                            <td><strong>NeckData</strong></td>
+                            <td><strong>65.8%</strong></td>
+                            <td><strong>63.7%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>gMLP</td>
+                            <td>OpenData</td>
+                            <td>60.6%</td>
+                            <td>53.5%</td>
+                        </tr>
+                        <tr style="background: #e6f2ff;">
+                            <td><strong>GRU_FCN (5% train)</strong></td>
+                            <td><strong>NeckData</strong></td>
+                            <td><strong>84.7%</strong></td>
+                            <td><strong>84.2%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>InceptionTime (5% train)</td>
+                            <td>OpenData</td>
+                            <td>78.8%</td>
+                            <td>78.2%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="text-align: center; margin-top: 20px; color: #666;">NeckData models consistently outperform OpenData (OpenFace) models, especially with limited training data.</p>
+            </div>
+
+            <div style="margin-top: 60px; text-align: center;">
+                <div class="grid" style="max-width: 800px; margin: 0 auto;">
+                    <div class="card">
+                        <span class="stat">84.7%</span>
+                        <p>Single-participant accuracy with only 5% training data</p>
+                    </div>
+                    <div class="card">
+                        <span class="stat">+6%</span>
+                        <p>Improvement over OpenFace with minimal calibration</p>
+                    </div>
+                    <div class="card">
+                        <span class="stat">~300K</span>
+                        <p>Trainable parameters in lightweight GRU model</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section style="background: white;">
+        <div class="container">
+            <h2>Citation</h2>
+            <div class="citation">
+<pre>@inproceedings{parreira2025whyface,
+  title={"Why the face?": Exploring Robot Error Detection
+         Using Instrumented Bystander Reactions},
+  author={Parreira, Maria Teresa and Zhang, Ruidong and
+          Lingaraju, Sukruth Gowdru and Bremers, Alexandra and
+          Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and
+          Saha, Manaswi and Kuniavsky, Michael and
+          Zhang, Cheng and Ju, Wendy},
+  booktitle={Proceedings of ACM Conference},
+  year={2025},
+  organization={ACM}
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2>Related Work</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>NeckFace (2021)</h3>
+                    <p>Original neck-mounted facial expression tracking system by Chen et al.</p>
+                    <a href="https://doi.org/10.1145/3463511" target="_blank" style="color: #667eea;">Read Paper →</a>
+                </div>
+
+                <div class="card">
+                    <h3>BAD Dataset (2023)</h3>
+                    <p>Bystander Affect Detection dataset for HRI failure detection by Bremers et al.</p>
+                    <a href="https://arxiv.org/abs/2301.11972" target="_blank" style="color: #667eea;">Read Paper →</a>
+                </div>
+
+                <div class="card">
+                    <h3>Err@HRI Challenge (2024)</h3>
+                    <p>Multimodal error detection challenge at HRI conference by Spitale et al.</p>
+                    <a href="https://arxiv.org/abs/2407.06094" target="_blank" style="color: #667eea;">Learn More →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p style="margin-bottom: 20px; font-size: 1.1em;">Cornell HCI & Robotics Lab | Cornell SciFi Lab</p>
+            <p>For questions, please contact: <a href="mailto:mtp93@cornell.edu">mtp93@cornell.edu</a></p>
+            <p style="margin-top: 20px; opacity: 0.7;">© 2025 Cornell University. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
