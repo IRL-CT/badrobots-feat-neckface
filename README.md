@@ -14,8 +14,11 @@
 ---
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/a898c13e-4acc-45e9-a4c3-a1361067b23d" alt="Study Overview" width="100%">
-</p>
+  <p align="center">
+    <img src="https://github.com/user-attachments/assets/a898c13e-4acc-45e9-a4c3-a1361067b23d" alt="Study Overview" width="100%">
+    <br/>
+    <small><em>Figure 1 — Study overview: NeckFace's neck-mounted IR cameras capture chin-region video; NeckNet-18 reconstructs 3D facial blendshapes and head rotations used by the error-detection models.</em></small>
+  </p>
 
 ## Abstract
 
