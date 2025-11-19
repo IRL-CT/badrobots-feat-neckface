@@ -2,7 +2,8 @@
 
 <div align="center">
 
-**[Maria Teresa Parreira](https://www.mariateresaparreira.com/)<sup>1,2</sup>, [Ruidong Zhang](https://www.ruidongzhang.com/)<sup>1</sup>, [Sukruth Gowdru Lingaraju](https://www.sukruthgl.com/)<sup>2</sup>, [Alexandra Bremers](https://alexbremers.com/)<sup>2</sup>, Xuanyu Fang<sup>2</sup>, [Adolfo Ramirez-Aristizabal](https://www.ramirez-aristizabal.com/)<sup>3</sup>, [Manaswi Saha](https://homes.cs.washington.edu/~manaswi/)<sup>3</sup>, [Michael Kuniavsky](https://www.kuniavsky.com/)<sup>3</sup>, [Cheng Zhang](https://www.chengzhang.org/)<sup>1</sup>, [Wendy Ju](https://wendyju.com/)<sup>1,2</sup>**
+**[Maria Teresa Parreira](https://www.mariateresaparreira.com/)<sup>1,2</sup>, [Ruidong Zhang](https://ruidongzhang.com/)<sup>1</sup>, [Sukruth Gowdru Lingaraju](https://www.linkedin.com/in/glsukruth/)<sup>2</sup>, [Alexandra Bremers](https://bremers.github.io/)<sup>2</sup>, [Xuanyu Fang](https://scholar.google.com/citations?user=Y18d-sUAAAAJ&hl=en)<sup>2</sup>, [Adolfo Ramirez-Aristizabal](https://scholar.google.com/citations?user=iF7yqHkAAAAJ&hl=en)<sup>3</sup>, [Manaswi Saha](https://manaswisaha.github.io/)<sup>3</sup>, [Michael Kuniavsky](https://scholar.google.com/citations?user=KtPU2SMAAAAJ&hl=en)<sup>3</sup>, [Cheng Zhang]( https://czhang.org)<sup>1</sup>, [Wendy Ju](https://wendyju.com/)<sup>1,2</sup>**
+
 
 <sup>1</sup>Cornell University | <sup>2</sup>Cornell Tech | <sup>3</sup>Accenture Labs
 

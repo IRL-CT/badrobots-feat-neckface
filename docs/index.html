@@ -317,7 +317,7 @@
         <div class="container">
             <div class="figure">
                 <img src="https://github.com/user-attachments/assets/a898c13e-4acc-45e9-a4c3-a1361067b23d" alt="Study Overview">
-                <p class="figure-caption">Figure 1: Overview of our system. Participants wear NeckFace while watching videos, their reactions are captured and processed through NeckNet-18 to reconstruct 3D facial expressions, which then train error detection models.</p>
+                <p class="figure-caption">Figure 1: User study scheme. Participants wearing NeckFace watch videos where a scenario of human or robot error is shown, eliciting a reaction. The IR camera image is converted into 3D facial points and head rotation data through a customized NeckNet model. This data is then used to train error detection models which map human reactions to the scenario displayed.</p>
             </div>
         </div>
     </section>
@@ -345,7 +345,6 @@
                     <ul>
                         <li>52 facial Blendshape parameters</li>
                         <li>3 head rotation angles</li>
-                        <li>Real-time performance</li>
                     </ul>
                 </div>
 
@@ -353,9 +352,8 @@
                     <h3>📊 Error Detection Models</h3>
                     <p>Machine learning models that detect robot errors from human facial reactions:</p>
                     <ul>
-                        <li><strong>84.7%</strong> accuracy with only 5% training data</li>
+                        <li><strong>84.7%</strong> accuracy with only 5% training data (intra-participant)</li>
                         <li><strong>5%</strong> better than OpenFace methods</li>
-                        <li>Superior to RGB camera approaches</li>
                     </ul>
                 </div>
 
@@ -365,7 +363,7 @@
                     <ul>
                         <li>NeckFace IR cameras</li>
                         <li>OpenFace features</li>
-                        <li>RGB camera data</li>
+                        <li>RGB camera data (with CNN)</li>
                     </ul>
                 </div>
             </div>
@@ -439,7 +437,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <p style="text-align: center; margin-top: 20px; color: #666;">NeckData models consistently outperform OpenData (OpenFace) models, especially with limited training data.</p>
+                <p style="text-align: center; margin-top: 20px; color: #666;">NeckData models consistently outperform OpenData (OpenFace) models on single-participant scenarios, especially with limited training data.</p>
             </div>
 
            
