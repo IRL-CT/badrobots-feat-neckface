@@ -183,9 +183,9 @@ If you use this work in your research, please cite:
 @inproceedings{parreira2025whyface,
   title={"Why the face?": Exploring Robot Error Detection Using Instrumented Bystander Reactions},
   author={Parreira, Maria Teresa and Zhang, Ruidong and Lingaraju, Sukruth Gowdru and Bremers, Alexandra and Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and Saha, Manaswi and Kuniavsky, Michael and Zhang, Cheng and Ju, Wendy},
-  booktitle={Proceedings of ACM Conference},
+  booktitle={TBD},
   year={2025},
-  organization={ACM}
+  organization={TBD}
 }
 ```
 
@@ -206,11 +206,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 For questions or issues, please open an issue on GitHub or contact:
-- Maria Teresa Parreira: mtp93@cornell.edu
-- Ruidong Zhang: rz379@cornell.edu
+- Maria Teresa Parreira: mb2554@cornell.edu
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by the Cornell HCI and Robotics Lab</sub>
+  <sub>Built with ❤️ by the IRL-CT and Claude Code</sub>
 </div>
