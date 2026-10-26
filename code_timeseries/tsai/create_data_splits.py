@@ -257,7 +257,7 @@ def create_data_splits_ids(df, num_folds = 5, fold_no=0, seed_value=42, sequence
             train_folds.append(train_fold)
 
             #return fold lists
-        return val_folds, test_folds, train_folds
+        return train_folds, val_folds, test_folds
     except Exception as e:
         print(f"Error in create_data_splits_ids: {e}")
         return None
