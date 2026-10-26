@@ -1,499 +1,509 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>"Why the face?" Robot Error Detection Using Instrumented Bystander Reactions</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #fff;
-        }
+  <title>"Why the face?": Exploring Robot Error Detection Using Instrumented Observer Reactions</title>
+  <meta name="description" content="A neck-mounted wearable (NeckFace) captures observers' facial reactions to errors; models trained on its 3D facial reconstructions detect errors better than OpenFace features, especially with little per-person data.">
+  <meta name="keywords" content="human-robot interaction, robot error detection, wearable sensing, NeckFace, facial expressions, social signals, HRI">
+  <meta name="author" content="Maria Teresa Parreira, Ruidong Zhang, Sukruth Gowdru Lingaraju, Alexandra Bremers, Xuanyu Fang, Adolfo Ramirez-Aristizabal, Manaswi Saha, Michael Kuniavsky, Cheng Zhang, Wendy Ju">
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+  <!-- Open Graph / social preview -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Interaction Research Lab, Cornell Tech">
+  <meta property="og:title" content="&quot;Why the face?&quot;: Exploring Robot Error Detection Using Instrumented Observer Reactions">
+  <meta property="og:description" content="Detecting errors from observers' facial reactions, captured by a neck-mounted wearable. ACM Transactions on Human-Robot Interaction.">
+  <meta property="og:url" content="https://irl.tech.cornell.edu/badrobots-feat-neckface/">
+  <meta property="og:image" content="https://irl.tech.cornell.edu/badrobots-feat-neckface/static/images/teaser_storyboard.jpg">
+  <meta name="twitter:card" content="summary_large_image">
 
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 60px 0 40px;
-            text-align: center;
-        }
+  <!-- Google Scholar -->
+  <meta name="citation_title" content="&quot;Why the face?&quot;: Exploring Robot Error Detection Using Instrumented Observer Reactions">
+  <meta name="citation_author" content="Parreira, Maria Teresa">
+  <meta name="citation_author" content="Zhang, Ruidong">
+  <meta name="citation_author" content="Gowdru Lingaraju, Sukruth">
+  <meta name="citation_author" content="Bremers, Alexandra">
+  <meta name="citation_author" content="Fang, Xuanyu">
+  <meta name="citation_author" content="Ramirez-Aristizabal, Adolfo">
+  <meta name="citation_author" content="Saha, Manaswi">
+  <meta name="citation_author" content="Kuniavsky, Michael">
+  <meta name="citation_author" content="Zhang, Cheng">
+  <meta name="citation_author" content="Ju, Wendy">
+  <meta name="citation_journal_title" content="ACM Transactions on Human-Robot Interaction">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_pdf_url" content="https://irl.tech.cornell.edu/badrobots-feat-neckface/static/pdfs/paper.pdf">
+  <!-- TODO(camera-ready): add <meta name="citation_doi" content="10.1145/..."> once the DOI is assigned. -->
 
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
+  <link rel="icon" type="image/svg+xml" href="static/images/favicon.svg">
 
-        .authors {
-            font-size: 1.1em;
-            margin-bottom: 15px;
-            line-height: 1.8;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-        .authors a {
-            color: white;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(255,255,255,0.5);
-        }
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="static/css/custom.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
 
-        .authors a:hover {
-            border-bottom-color: white;
-        }
-
-        .affiliations {
-            font-size: 0.95em;
-            margin-bottom: 25px;
-            opacity: 0.95;
-        }
-
-        .links {
-            margin-top: 30px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            margin: 5px;
-            background: white;
-            color: #667eea;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
-        }
-
-        section {
-            padding: 60px 0;
-        }
-
-        section:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        h2 {
-            font-size: 2em;
-            margin-bottom: 30px;
-            text-align: center;
-            color: #667eea;
-        }
-
-        .abstract {
-            font-size: 1.1em;
-            line-height: 1.8;
-            max-width: 900px;
-            margin: 0 auto;
-            text-align: justify;
-        }
-
-        .highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-weight: 600;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-        }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-        }
-
-        .card h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-        }
-
-        .card ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .card li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-        }
-
-        .card li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .figure {
-            text-align: center;
-            margin: 40px 0;
-        }
-
-        .figure img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .figure-caption {
-            margin-top: 15px;
-            font-style: italic;
-            color: #666;
-        }
-
-        .results-table {
-            max-width: 800px;
-            margin: 30px auto;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        th, td {
-            padding: 15px;
-            text-align: left;
-        }
-
-        th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-weight: 600;
-        }
-
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        .citation {
-            background: #f8f9fa;
-            padding: 20px;
-            border-left: 4px solid #667eea;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            overflow-x: auto;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        footer {
-            background: #2d3748;
-            color: white;
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        .stat {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .authors {
-                font-size: 1em;
-            }
-
-            section {
-                padding: 40px 0;
-            }
-        }
-
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            overflow: hidden;
-            max-width: 800px;
-            margin: 30px auto;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>"Why the face?" Exploring Robot Error Detection Using Instrumented Bystander Reactions </h1>
-          
 
-            <div class="authors">
-                <a href="https://www.mariateresaparreira.com/" target="_blank">Maria Teresa Parreira</a><sup>1,2</sup>,
-                <a href="https://ruidongzhang.com/" target="_blank">Ruidong Zhang</a><sup>1</sup>,
-                <a href="https://www.linkedin.com/in/glsukruth/" target="_blank">Sukruth Gowdru Lingaraju</a><sup>2</sup>,
-                <a href="https://bremers.github.io/" target="_blank">Alexandra Bremers</a><sup>2</sup>,
-                <a href="https://scholar.google.com/citations?user=Y18d-sUAAAAJ&hl=en" target="_blank">Xuanyu Fang</a><sup>2</sup>,
-                <a href="https://scholar.google.com/citations?user=iF7yqHkAAAAJ&hl=en" target="_blank">Adolfo Ramirez-Aristizabal</a><sup>3</sup>,
-                <a href="https://manaswisaha.github.io/" target="_blank">Manaswi Saha</a><sup>3</sup>,
-                <a href="https://scholar.google.com/citations?user=KtPU2SMAAAAJ&hl=en" target="_blank">Michael Kuniavsky</a><sup>3</sup>,
-                <a href="https://czhang.org/" target="_blank">Cheng Zhang</a><sup>1</sup>,
-                <a href="https://wendyju.com/" target="_blank">Wendy Ju</a><sup>1,2</sup>
+  <button class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <main id="main-content">
+
+  <!-- ============================== Title ============================== -->
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">
+              <span class="title-quote">&ldquo;Why the face?&rdquo;</span>
+              Exploring Robot Error Detection Using Instrumented Observer Reactions
+            </h1>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><a href="https://www.mariateresaparreira.com/" target="_blank">Maria Teresa Parreira</a><sup>1,2</sup>,</span>
+              <span class="author-block"><a href="https://ruidongzhang.com/" target="_blank">Ruidong Zhang</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="https://www.linkedin.com/in/glsukruth/" target="_blank">Sukruth Gowdru Lingaraju</a><sup>2</sup>,</span>
+              <span class="author-block"><a href="https://bremers.github.io/" target="_blank">Alexandra Bremers</a><sup>2</sup>,</span>
+              <span class="author-block"><a href="https://scholar.google.com/citations?user=Y18d-sUAAAAJ&hl=en" target="_blank">Xuanyu Fang</a><sup>2</sup>,</span>
+              <span class="author-block"><a href="https://scholar.google.com/citations?user=iF7yqHkAAAAJ&hl=en" target="_blank">Adolfo Ramirez-Aristizabal</a><sup>3</sup>,</span>
+              <span class="author-block"><a href="https://manaswisaha.github.io/" target="_blank">Manaswi Saha</a><sup>3</sup>,</span>
+              <span class="author-block"><a href="https://scholar.google.com/citations?user=KtPU2SMAAAAJ&hl=en" target="_blank">Michael Kuniavsky</a><sup>3</sup>,</span>
+              <span class="author-block"><a href="https://czhang.org/" target="_blank">Cheng Zhang</a><sup>1</sup>,</span>
+              <span class="author-block"><a href="https://wendyju.com/" target="_blank">Wendy Ju</a><sup>1,2</sup></span>
             </div>
 
             <div class="affiliations">
-                <sup>1</sup>Cornell University &nbsp;|&nbsp;
-                <sup>2</sup>Cornell Tech &nbsp;|&nbsp;
-                <sup>3</sup>Accenture Labs
+              <span class="author-block"><sup>1</sup>Cornell University</span>&nbsp;&nbsp;
+              <span class="author-block"><sup>2</sup>Cornell Tech</span>&nbsp;&nbsp;
+              <span class="author-block"><sup>3</sup>Accenture Labs</span>
             </div>
 
-            <div class="links">
-                <a href="images/main.pdf" class="btn" target="_blank">📄 Paper</a>
-                <a href="images/supp_material.pdf" class="btn btn-secondary" target="_blank">📊 Supplementary</a>
-                <a href="https://github.com/IRL-CT/badrobots-feat-neckface" class="btn btn-secondary" target="_blank">💻 Code</a>
+            <div class="publication-venue">ACM Transactions on Human-Robot Interaction (THRI), 2026</div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="static/pdfs/paper.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span><span>Paper</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="static/pdfs/supplementary.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span><span>Supplementary</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://github.com/IRL-CT/badrobots-feat-neckface" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://github.com/IRL-CT/badrobots-feat-neckface/raw/main/stimulus_dataset_information.xlsx" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-film"></i></span><span>Stimulus List</span>
+                  </a>
+                </span>
+                <!-- TODO(camera-ready): uncomment once available.
+                <span class="link-block">
+                  <a href="https://doi.org/10.1145/XXXXXXX" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-doi"></i></span><span>DOI</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span><span>arXiv</span>
+                  </a>
+                </span>
+                -->
+              </div>
             </div>
+          </div>
         </div>
-    </header>
+      </div>
+    </div>
+  </section>
 
-    <section>
-        <div class="container">
-            <div class="figure">
-                <img src="https://github.com/user-attachments/assets/a898c13e-4acc-45e9-a4c3-a1361067b23d" alt="Study Overview">
-                <p class="figure-caption">Figure 1: User study scheme. Participants wearing NeckFace watch videos where a scenario of human or robot error is shown, eliciting a reaction. The IR camera image is converted into 3D facial points and head rotation data through a customized NeckNet model. This data is then used to train error detection models which map human reactions to the scenario displayed.</p>
-            </div>
+  <!-- ============================== Teaser ============================== -->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <figure class="paper-figure">
+          <img src="static/images/teaser_storyboard.jpg" alt="Pipeline: a participant wearing the NeckFace neckband watches a stimulus video; the two IR cameras under the chin record video, NeckNet-18 converts it into 3D facial reactions, and an error detection model maps those reactions to whether the video showed an error.">
+          <figcaption class="figure-caption">
+            Participants wearing NeckFace watch videos in which a human or robot error occurs (or does not). The neckband's IR camera images
+            are converted into 3D facial expression and head rotation data by NeckNet-18, and that data trains models that detect
+            whether the person is reacting to an error.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Abstract ============================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              How do humans recognize and rectify social missteps? We achieve social competence by looking around at our peers,
+              decoding subtle cues from others around us &mdash; a raised eyebrow, a laugh &mdash; to evaluate the environment and our
+              actions. Robots, however, struggle to perceive and make use of these nuanced reactions. By employing a novel
+              neck-mounted device that records facial expressions from the chin region, we explore the potential of previously
+              untapped data to capture and interpret human responses to robot error. First, we develop NeckNet-18, a 3D facial
+              reconstruction model to map the reactions captured through the chin camera onto facial points and head motion. We
+              then use these facial responses to develop a robot error detection model which outperforms standard methodologies
+              such as using OpenFace or video data, generalizing well especially for within-participant data. Through this work,
+              we argue for expanding human-in-the-loop robot sensing, fostering more seamless integration of robots into diverse
+              human environments, pushing the boundaries of social cue detection and opening new avenues for adaptable robotics.
+            </p>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section style="background: white;">
-        <div class="container">
-            <h2>Abstract</h2>
-            <div class="abstract">
-                <p>How do humans recognize and rectify social missteps? We achieve social competence by looking around at our peers, decoding subtle cues from bystanders — a raised eyebrow, a laugh — to evaluate the environment and our actions. Robots, however, struggle to perceive and make use of these nuanced reactions.</p>
-
-                <p style="margin-top: 20px;">By employing a novel <span class="highlight">neck-mounted device</span> that records facial expressions from the chin region, we explore the potential of previously untapped data to capture and interpret human responses to robot error. First, we develop <span class="highlight">NeckNet-18</span>, a 3D facial reconstruction model to map the reactions captured through the chin camera onto facial points and head motion. We then use these facial responses to develop a robot error detection model which <span class="highlight">outperforms standard methodologies</span> such as using OpenFace or video data, generalizing well especially for within-participant data.</p>
-
-                <p style="margin-top: 20px;">Through this work, we argue for expanding human-in-the-loop robot sensing, fostering more seamless integration of robots into diverse human environments, pushing the boundaries of social cue detection and opening new avenues for adaptable and sustainable robotics.</p>
-            </div>
+  <!-- ============================== Key findings ============================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Key Findings</h2>
+      <div class="columns is-multiline">
+        <div class="column is-half">
+          <div class="stat-tile">
+            <div class="stat-value">84.7%</div>
+            <div class="stat-label">Accuracy for a single participant, trained on 5% of their data</div>
+            <div class="stat-detail">GRU_FCN on NeckData, vs. 78.8% for the best OpenFace-feature model (InceptionTime). Averaged over all 25 participants.</div>
+          </div>
         </div>
-    </section>
-
-    <section>
-        <div class="container">
-            <h2>Key Contributions</h2>
-            <div class="grid">
-                <div class="card">
-                    <h3>🎯 NeckNet-18</h3>
-                    <p>A lightweight 3D facial reconstruction model (ResNet-18 based) that converts IR camera data from a neck-mounted device into:</p>
-                    <ul>
-                        <li>52 facial Blendshape parameters</li>
-                        <li>3 head rotation angles</li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>📊 Error Detection Models</h3>
-                    <p>Machine learning models that detect robot errors from human facial reactions:</p>
-                    <ul>
-                        <li><strong>84.7%</strong> accuracy with only 5% training data (intra-participant)</li>
-                        <li><strong>5%</strong> better than OpenFace methods</li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>🔬 Comprehensive Benchmark</h3>
-                    <p>First systematic comparison of neck-mounted device data against conventional methods:</p>
-                    <ul>
-                        <li>NeckFace IR cameras</li>
-                        <li>OpenFace features</li>
-                        <li>RGB camera data (with CNN)</li>
-                    </ul>
-                </div>
-            </div>
+        <div class="column is-half">
+          <div class="stat-tile">
+            <div class="stat-value">65.8%</div>
+            <div class="stat-label">Accuracy on unseen participants</div>
+            <div class="stat-detail">GRU_FCN on NeckData, vs. 60.6% for OpenFace features (gMLP); F1 0.637 vs. 0.535. Mean over 5 participant-level folds.</div>
+          </div>
         </div>
-    </section>
-
-    <section style="background: white;">
-        <div class="container">
-            <h2>System Architecture</h2>
-
-            <div class="figure">
-                <img src="images/FIGURE_setup.png" alt="Study Setup" style="max-width: 70%;">
-                <p class="figure-caption">Figure 2: Study setup showing the calibration and stimulus rounds. Participants wear NeckFace while watching stimulus videos, with reactions recorded by both the neck-mounted IR cameras and a frontal RGB camera.</p>
-            </div>
-
-            <div style="max-width: 900px; margin: 40px auto;">
-                <h3 style="color: #667eea; margin-bottom: 20px;">Two-Stage Pipeline</h3>
-
-                <div style="margin-bottom: 30px;">
-                    <h4 style="color: #333; margin-bottom: 10px;">Stage 1: NeckNet-18 (3D Facial Reconstruction)</h4>
-                    <p>Converts IR camera images from NeckFace device into 3D facial expressions. Requires a short calibration round (~5 minutes) where participants copy facial movements displayed on an iPhone with TrueDepth camera.</p>
-                </div>
-
-                <div>
-                    <h4 style="color: #333; margin-bottom: 10px;">Stage 2: Error Detection Model</h4>
-                    <p>Trained on reconstructed facial reactions to detect errors in robot (or human) actions. Supports both cross-participant generalization and single-participant personalization with minimal data.</p>
-                </div>
-            </div>
+        <div class="column is-half">
+          <div class="stat-tile">
+            <div class="stat-value">&gt;95%</div>
+            <div class="stat-label">Both data sources, with 45% of a participant's data</div>
+            <div class="stat-detail">95.5% for NeckData vs. 96.5% for OpenData. NeckData's advantage is concentrated in the low-data regime.</div>
+          </div>
         </div>
-    </section>
-
-    <section>
-        <div class="container">
-            <h2>Results</h2>
-
-            <div class="results-table">
-                <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Error Detection Performance</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Model Type</th>
-                            <th>Dataset</th>
-                            <th>Accuracy</th>
-                            <th>F1-Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr style="background: #e6f2ff;">
-                            <td><strong>GRU_FCN</strong></td>
-                            <td><strong>NeckData</strong></td>
-                            <td><strong>65.8%</strong></td>
-                            <td><strong>63.7%</strong></td>
-                        </tr>
-                        <tr>
-                            <td>gMLP</td>
-                            <td>OpenData</td>
-                            <td>60.6%</td>
-                            <td>53.5%</td>
-                        </tr>
-                        <tr style="background: #e6f2ff;">
-                            <td><strong>GRU_FCN (5% train)</strong></td>
-                            <td><strong>NeckData</strong></td>
-                            <td><strong>84.7%</strong></td>
-                            <td><strong>84.2%</strong></td>
-                        </tr>
-                        <tr>
-                            <td>InceptionTime (5% train)</td>
-                            <td>OpenData</td>
-                            <td>78.8%</td>
-                            <td>78.2%</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p style="text-align: center; margin-top: 20px; color: #666;">NeckData models consistently outperform OpenData (OpenFace) models on single-participant scenarios, especially with limited training data.</p>
-            </div>
-
-           
+        <div class="column is-half">
+          <div class="stat-tile">
+            <div class="stat-value">~300k</div>
+            <div class="stat-label">Trainable parameters in the best NeckData error detector</div>
+            <div class="stat-detail">GRU_FCN is lightweight, which matters for portable, wearable systems.</div>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section style="background: white;">
-        <div class="container">
-            <h2>Citation</h2>
-            <div class="citation">
-<pre>@inproceedings{parreira2025whyface,
-  title={"Why the face?": Exploring Robot Error Detection
-         Using Instrumented Bystander Reactions},
-  author={Parreira, Maria Teresa and Zhang, Ruidong and
-          Lingaraju, Sukruth Gowdru and Bremers, Alexandra and
-          Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and
-          Saha, Manaswi and Kuniavsky, Michael and
-          Zhang, Cheng and Ju, Wendy},
-  booktitle={Proceedings of ACM Conference},
-  year={2025},
-  organization={ACM}
-}</pre>
-            </div>
+  <!-- ============================== Study ============================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">User Study</h2>
+      <div class="content section-lead has-text-justified">
+        <p>
+          30 participants wore NeckFace, a neckband with two infrared cameras that view the chin, cheeks and neck from below
+          (here driven by a single Raspberry Pi 4B). In a ~5-minute <em>calibration round</em>, participants copied facial
+          movements shown on a video while an iPhone's TrueDepth camera recorded ground-truth Blendshapes. In the
+          <em>stimulus round</em>, they watched 30 short videos (10 human failures, 10 robot failures, 10 controls;
+          13.69 &plusmn; 7.77 s on average) in random order, while NeckFace and a participant-facing webcam recorded their
+          reactions. Data from 25 participants was retained after excluding sessions with technical or data-quality problems.
+        </p>
+      </div>
+
+      <figure class="paper-figure">
+        <img src="static/images/study_setup.jpg" alt="Study setup: in the calibration round a participant wearing NeckFace copies movements shown on an iPhone; in the stimulus round they watch videos on a screen while a webcam and NeckFace record them.">
+        <figcaption class="figure-caption">
+          Study setup. <strong>Calibration round:</strong> the participant, wearing NeckFace, copies the movements shown on an
+          iPhone 11. <strong>Stimulus round:</strong> 30 videos play on a screen while a webcam and NeckFace record facial reactions.
+        </figcaption>
+      </figure>
+
+      <figure class="paper-figure is-narrow">
+        <img src="static/images/study_stages.jpg" alt="Flow diagram linking the study stages to the datasets they produce (NeckFaceOriginal, NeckFaceIRCalib, TrueDepth, NeckFaceIR, RGBData, OpenData, NeckData) and to the models that use them (NeckNet-18 pretraining, calibration and inference; error detection).">
+        <figcaption class="figure-caption">
+          Study stages and the data they produce. NeckNet-18 is pre-trained on data from the original NeckFace study, then
+          fine-tuned on each participant's calibration data. Stimulus-round IR frames pass through NeckNet-18 to produce
+          <em>NeckData</em>; the webcam video is processed with OpenFace to produce <em>OpenData</em>. Raw IR and RGB frames are
+          also tested directly.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================== Method ============================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Method</h2>
+
+      <div class="columns is-variable is-6">
+        <div class="column is-half">
+          <h3 class="title is-5">1. NeckNet-18: 3D facial reconstruction</h3>
+          <div class="content has-text-justified">
+            <p>
+              A ResNet-18 backbone with a fully-connected decoder maps the pair of IR images to a 55-dimensional vector:
+              52 ARKit Blendshapes plus head yaw, pitch and roll. It is lighter than the ResNet-34 used in the original
+              NeckNet, which suits our smaller calibration set (5 minutes at 12 fps). The model is pre-trained on the original
+              NeckFace dataset and fine-tuned on calibration data from this study.
+            </p>
+          </div>
+          <figure class="paper-figure">
+            <img src="static/images/necknet18.jpg" alt="NeckNet-18 architecture: a ResNet-18 style convolutional network followed by average pooling, dropout and a linear output layer.">
+            <figcaption class="figure-caption">NeckNet-18 architecture.</figcaption>
+          </figure>
         </div>
-    </section>
-
-    <section>
-        <div class="container">
-            <h2>Related Work</h2>
-            <div class="grid">
-                <div class="card">
-                    <h3>NeckFace (2021)</h3>
-                    <p>Original neck-mounted facial expression tracking system by Chen et al.</p>
-                    <a href="https://doi.org/10.1145/3463511" target="_blank" style="color: #667eea;">Read Paper →</a>
-                </div>
-
-                <div class="card">
-                    <h3>BAD Dataset (2023)</h3>
-                    <p>Bystander Affect Detection dataset for HRI failure detection by Bremers et al.</p>
-                    <a href="https://arxiv.org/abs/2301.11972" target="_blank" style="color: #667eea;">Read Paper →</a>
-                </div>
-
-                <div class="card">
-                    <h3>Err@HRI Challenge (2024)</h3>
-                    <p>Multimodal error detection challenge at HRI conference by Spitale et al.</p>
-                    <a href="https://arxiv.org/abs/2407.06094" target="_blank" style="color: #667eea;">Learn More →</a>
-                </div>
-            </div>
+        <div class="column is-half">
+          <h3 class="title is-5">2. Error detection from reactions</h3>
+          <div class="content has-text-justified">
+            <p>
+              Reaction windows are labelled <em>error</em> (frames after the error occurs in an error video) or
+              <em>neutral</em> (control videos). We searched the same model families for both NeckData and OpenData (GRU,
+              LSTM, BiLSTM, GRU_FCN, LSTM_FCN, Transformer, MiniRocket, gMLP, InceptionTime/Plus, and an MLP following prior work),
+              and ResNet34 for the raw-frame datasets.
+            </p>
+          </div>
+          <figure class="paper-figure">
+            <img src="static/images/gru_fcn.jpg" alt="GRU_FCN architecture: a recurrent branch and a three-block fully convolutional branch run in parallel; their outputs are concatenated before the classification layer.">
+            <figcaption class="figure-caption">GRU_FCN, the best-performing model on NeckData.</figcaption>
+          </figure>
         </div>
-    </section>
+      </div>
 
-    <footer>
-        <div class="container">
-            <p style="margin-bottom: 20px; font-size: 1.1em;"> IRL Cornell Tech Lab | Cornell SciFi Lab</p>
-            <p style="margin-top: 20px; opacity: 0.7;">© 2025 Cornell University. All rights reserved.</p>
+      <h3 class="title is-5">Data sources compared</h3>
+      <div class="table-container">
+        <table class="table is-fullwidth is-hoverable results-table">
+          <thead>
+            <tr><th>Dataset</th><th>What it is</th><th class="num">Neutral (0)</th><th class="num">Error (1)</th><th class="num">Total frames</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>NeckData</strong></td><td>55-dim. Blendshapes + head rotation, reconstructed from NeckFace IR by NeckNet-18</td><td class="num">51,745</td><td class="num">37,815</td><td class="num">89,560</td></tr>
+            <tr class="rgb-row"><td><strong>OpenData</strong></td><td>49 OpenFace action unit, gaze and pose features from the webcam</td><td class="num">51,580</td><td class="num">37,815</td><td class="num">89,395</td></tr>
+            <tr><td><strong>NeckFaceIR</strong></td><td>Raw NeckFace IR frames</td><td class="num">51,745</td><td class="num">37,815</td><td class="num">89,560</td></tr>
+            <tr class="rgb-row"><td><strong>RGBData</strong></td><td>Raw webcam frames</td><td class="num">51,578</td><td class="num">37,815</td><td class="num">89,393</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">All datasets are sampled at 12 fps (RGB-derived data downsampled from 30 fps and matched to NeckData timestamps). Grey rows come from the RGB webcam.</p>
+    </div>
+  </section>
+
+  <!-- ============================== Results ============================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Results</h2>
+
+      <h3 class="title is-5">3D facial reconstruction (NeckNet-18)</h3>
+      <div class="content has-text-justified">
+        <p>
+          5-fold cross-validation over temporally non-overlapping calibration data, mean &plusmn; SD. Blendshapes range from 0 to 1000.
+          The original NeckFace paper reports that reconstructions with MAE under 40 look visually similar to the ground truth.
+        </p>
+      </div>
+      <div class="table-container">
+        <table class="table is-fullwidth results-table">
+          <thead>
+            <tr><th>Model</th><th class="num">MAE, facial Blendshapes</th><th class="num">MAE, head rotation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>NeckNet-18</strong> (this work; 5 min calibration, 12 fps)</td><td class="num">34.0 &plusmn; 6.9</td><td class="num">7.0 &plusmn; 1.3</td></tr>
+            <tr><td>Original NeckNet (<a href="https://doi.org/10.1145/3463511" target="_blank">Chen et al., 2021</a>; 7 min calibration, 30 fps)</td><td class="num">25.6 &plusmn; 5.1</td><td class="num">3.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="title is-5" style="margin-top: 2.5rem;">Error detection</h3>
+      <div class="content has-text-justified">
+        <p>
+          Test-set performance of the best model per training protocol and data source (macro-averaged).
+          <strong>Cross-participant</strong> rows are mean &plusmn; SD over the test sets of a 5-fold, participant-level cross-validation
+          (17 training, 5 validation and 3 test participants per fold; no participant appears in more than one of the training, validation and test sets in an iteration). <strong>Single-participant</strong> rows train on a random 5% or 45% of each participant's
+          stimulus-round frames and test on the rest of that participant's data, mean &plusmn; SD over all 25 participants.
+        </p>
+      </div>
+      <div class="table-container">
+        <table class="table is-fullwidth results-table">
+          <thead>
+            <tr><th>Model</th><th>Dataset</th><th class="num">Accuracy</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr>
+          </thead>
+          <tbody>
+            <tr class="group-header"><td colspan="6">Time-series models: cross-participant</td></tr>
+            <tr class="rgb-row"><td>gMLP</td><td><strong>OpenData</strong></td><td class="num">0.606 &plusmn; 0.051</td><td class="num">0.563 &plusmn; 0.025</td><td class="num">0.632 &plusmn; 0.072</td><td class="num">0.535 &plusmn; 0.015</td></tr>
+            <tr><td>GRU_FCN</td><td><strong>NeckData</strong></td><td class="num is-better">0.658 &plusmn; 0.061</td><td class="num is-better">0.649 &plusmn; 0.060</td><td class="num is-better">0.667 &plusmn; 0.052</td><td class="num is-better">0.637 &plusmn; 0.070</td></tr>
+
+            <tr class="group-header"><td colspan="6">Pre-trained on one dataset, fine-tuned on the other: cross-participant</td></tr>
+            <tr class="rgb-row"><td>gMLP</td><td><strong>OpenData</strong> (fine-tuned)</td><td class="num">0.569 &plusmn; 0.040</td><td class="num">0.547 &plusmn; 0.028</td><td class="num">0.572 &plusmn; 0.075</td><td class="num">0.538 &plusmn; 0.019</td></tr>
+            <tr><td>gMLP</td><td><strong>NeckData</strong> (fine-tuned)</td><td class="num is-better">0.619 &plusmn; 0.057</td><td class="num is-better">0.597 &plusmn; 0.042</td><td class="num is-better">0.619 &plusmn; 0.057</td><td class="num is-better">0.589 &plusmn; 0.047</td></tr>
+
+            <tr class="group-header"><td colspan="6">Single-participant: 5% of the participant's data for training</td></tr>
+            <tr class="rgb-row"><td>InceptionTime</td><td><strong>OpenData</strong></td><td class="num">0.788 &plusmn; 0.049</td><td class="num">0.782 &plusmn; 0.048</td><td class="num">0.785 &plusmn; 0.050</td><td class="num">0.782 &plusmn; 0.049</td></tr>
+            <tr><td>GRU_FCN</td><td><strong>NeckData</strong></td><td class="num is-better">0.847 &plusmn; 0.048</td><td class="num is-better">0.840 &plusmn; 0.048</td><td class="num is-better">0.846 &plusmn; 0.050</td><td class="num is-better">0.842 &plusmn; 0.049</td></tr>
+
+            <tr class="group-header"><td colspan="6">Single-participant: 45% of the participant's data for training</td></tr>
+            <tr class="rgb-row"><td>InceptionTime</td><td><strong>OpenData</strong></td><td class="num is-better">0.965 &plusmn; 0.019</td><td class="num is-better">0.963 &plusmn; 0.020</td><td class="num is-better">0.965 &plusmn; 0.020</td><td class="num is-better">0.964 &plusmn; 0.020</td></tr>
+            <tr><td>GRU_FCN</td><td><strong>NeckData</strong></td><td class="num">0.955 &plusmn; 0.028</td><td class="num">0.954 &plusmn; 0.029</td><td class="num">0.954 &plusmn; 0.029</td><td class="num">0.954 &plusmn; 0.029</td></tr>
+
+            <tr class="group-header"><td colspan="6">Frame-based models: cross-participant</td></tr>
+            <tr class="rgb-row"><td>ResNet34</td><td><strong>RGBData</strong></td><td class="num">0.515 &plusmn; 0.025</td><td class="num is-better">0.505 &plusmn; 0.020</td><td class="num is-better">0.505 &plusmn; 0.018</td><td class="num is-better">0.493 &plusmn; 0.023</td></tr>
+            <tr><td>ResNet34</td><td><strong>NeckFaceIR</strong></td><td class="num is-better">0.530 &plusmn; 0.031</td><td class="num">0.504 &plusmn; 0.027</td><td class="num">0.501 &plusmn; 0.016</td><td class="num">0.474 &plusmn; 0.014</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Grey rows use data from the RGB webcam. Bold marks the higher value within each pair; no significance tests were run,
+        and several differences are within one SD. ResNet34 models were selected on a single fold (see Limitations).
+        Hyperparameter search spaces are listed in the supplementary material.
+      </p>
+
+      <div class="content has-text-justified" style="margin-top: 2rem;">
+        <ul>
+          <li><strong>Unseen participants:</strong> NeckData beats OpenFace features by about 5 points of accuracy and 10 points of F1.
+            Cross-participant accuracy is still modest overall, which reflects how much reactions vary between people.</li>
+          <li><strong>Transfer between feature spaces:</strong> pre-training on one dataset and fine-tuning on the other did not beat
+            training on either alone. Fine-tuning on NeckData still came out about 5 points ahead of fine-tuning on OpenData.</li>
+          <li><strong>Personalization:</strong> with only 5% of a participant's data, NeckData reaches 84.7% accuracy, about 6 points
+            above OpenData. With 45%, both exceed 95% and OpenData is about 1 point ahead.</li>
+          <li><strong>Raw frames:</strong> ResNet34 on raw IR or RGB frames performs only slightly above chance. Models on NeckData are
+            12&ndash;15 points more accurate, which supports the extra reconstruction step.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Limitations ============================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Scope and Limitations</h2>
+      <div class="content has-text-justified">
+        <ul>
+          <li>The study is a controlled, <strong>stationary, video-elicitation</strong> paradigm, not live, mobile interaction with a
+            robot. The mobility benefits of a wearable sensor are the motivation for this work, but they remain to be tested in
+            embodied, in-person HRI.</li>
+          <li>NeckData and OpenData differ in both <strong>sensor</strong> (neck-mounted IR vs. frontal RGB) and <strong>feature
+            pipeline</strong> (NeckNet-18 vs. OpenFace). The comparison cannot isolate which factor drives the difference.</li>
+          <li>Cross-participant estimates rest on <strong>a small number of test participants per fold</strong> and should be read as indicative.
+            We report only the best architecture per protocol, and how far it leads the other architectures was not
+            systematically characterized. Our conclusions concern the data source, not the choice of architecture.</li>
+          <li>ResNet34 frame models were selected on a single fold rather than all five, because of their compute cost.</li>
+          <li>NeckFace needs per-wearer calibration and is sensitive to lighting, camera placement and accessories such as large
+            earrings, which led to several exclusions.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Code ============================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Code and Materials</h2>
+      <div class="content">
+        <p>Everything is in the <a href="https://github.com/IRL-CT/badrobots-feat-neckface" target="_blank">GitHub repository</a>:</p>
+        <div class="table-container">
+          <table class="table is-fullwidth results-table">
+            <thead><tr><th>Folder</th><th>Contents</th></tr></thead>
+            <tbody>
+              <tr><td><a href="https://github.com/IRL-CT/badrobots-feat-neckface/tree/main/code_neckface_training" target="_blank"><code>code_neckface_training/</code></a></td><td>NeckNet-18 data preparation, training and inference</td></tr>
+              <tr><td><a href="https://github.com/IRL-CT/badrobots-feat-neckface/tree/main/code_preprocessing" target="_blank"><code>code_preprocessing/</code></a></td><td>Building the IR, RGB and OpenFace datasets from the raw recordings; feature analysis</td></tr>
+              <tr><td><a href="https://github.com/IRL-CT/badrobots-feat-neckface/tree/main/code_timeseries" target="_blank"><code>code_timeseries/</code></a></td><td>Time-series error detection models (tsai models, GRU/LSTM, Transformer) and participant-level splits</td></tr>
+              <tr><td><a href="https://github.com/IRL-CT/badrobots-feat-neckface/tree/main/code_rgb" target="_blank"><code>code_rgb/</code></a></td><td>Frame-based ResNet error detection models</td></tr>
+              <tr><td><a href="https://github.com/IRL-CT/badrobots-feat-neckface/raw/main/stimulus_dataset_information.xlsx"><code>stimulus_dataset_information.xlsx</code></a></td><td>The 30 stimulus videos: sources, type, error timestamps</td></tr>
+            </tbody>
+          </table>
         </div>
-    </footer>
+        <p>
+          Pre-trained NeckNet weights (<code>neckface_us_full_model.tar</code>) can be
+          <a href="https://cornell.box.com/s/cuqqeuz9eqyauwbkb1rkakqi6vul21op" target="_blank">downloaded from Cornell Box</a>.
+          For building the NeckFace hardware, see <a href="https://doi.org/10.1145/3463511" target="_blank">Chen et al., 2021</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Related ============================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Related Work</h2>
+      <div class="content">
+        <ul>
+          <li><a href="https://doi.org/10.1145/3463511" target="_blank">NeckFace: Continuously Tracking Full Facial Expressions on Neck-mounted Wearables</a>. Chen et al., IMWUT 2021.</li>
+          <li><a href="https://arxiv.org/abs/2303.04835" target="_blank">The Bystander Affect Detection (BAD) Dataset for Failure Detection in HRI</a>. Bremers et al., 2023.</li>
+          <li><a href="https://arxiv.org/abs/2301.11972" target="_blank">Using Social Cues to Recognize Task Failures for HRI: Overview, State-of-the-Art, and Future Directions</a>. Bremers et al., 2024.</li>
+          <li><a href="https://arxiv.org/abs/2403.06315" target="_blank">A Study on Domain Generalization for Failure Detection through Human Reactions in HRI</a>. Parreira et al., 2024.</li>
+          <li><a href="https://doi.org/10.1109/RO-MAN60168.2024.10731310" target="_blank">&ldquo;Bad Idea, Right?&rdquo; Exploring Anticipatory Human Reactions for Outcome Prediction in HRI</a>. Parreira et al., RO-MAN 2024.</li>
+          <li><a href="https://arxiv.org/abs/2407.06094" target="_blank">ERR@HRI 2024 Challenge: Multimodal Detection of Errors and Failures in Human-Robot Interactions</a>. Spitale et al., 2024.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== BibTeX ============================== -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <div class="bibtex-header">
+        <h2 class="title">BibTeX</h2>
+        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+          <i class="fas fa-copy"></i>
+          <span class="copy-text">Copy</span>
+        </button>
+      </div>
+      <!-- TODO(camera-ready): add volume, number, articleno and doi once assigned. -->
+      <pre id="bibtex-code"><code>@article{parreira2026whyface,
+  title   = {``Why the face?'': Exploring Robot Error Detection Using Instrumented Observer Reactions},
+  author  = {Parreira, Maria Teresa and Zhang, Ruidong and Gowdru Lingaraju, Sukruth and Bremers, Alexandra and Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and Saha, Manaswi and Kuniavsky, Michael and Zhang, Cheng and Ju, Wendy},
+  journal = {ACM Transactions on Human-Robot Interaction},
+  year    = {2026},
+  publisher = {ACM}
+}</code></pre>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content has-text-centered">
+            <p>
+              <a href="https://irl.tech.cornell.edu/" target="_blank">Interaction Research Lab</a>, Cornell Tech &middot;
+              <a href="https://www.scifilab.org/" target="_blank">SciFi Lab</a>, Cornell University
+            </p>
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>,
+              which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+              It is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyBibTeX() {
+      const text = document.getElementById('bibtex-code').textContent;
+      const label = document.querySelector('.copy-bibtex-btn .copy-text');
+      navigator.clipboard.writeText(text).then(function () {
+        label.textContent = 'Copied';
+        setTimeout(function () { label.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    window.addEventListener('scroll', function () {
+      document.querySelector('.scroll-to-top').classList.toggle('visible', window.pageYOffset > 300);
+    });
+  </script>
 </body>
 </html>
