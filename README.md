@@ -8,7 +8,7 @@
 
 *ACM Transactions on Human-Robot Interaction (THRI), 2026*
 
-[Project Page](https://irl.tech.cornell.edu/badrobots-feat-neckface/) | [Paper](docs/static/pdfs/paper.pdf) | [Supplementary Material](docs/static/pdfs/supplementary.pdf)
+[Project Page](https://irl.tech.cornell.edu/badrobots-feat-neckface/) | [Paper (DOI)](https://doi.org/10.1145/3871067) | [PDF](docs/static/pdfs/paper.pdf) | [Supplementary Material](docs/static/pdfs/supplementary.pdf)
 
 </div>
 
@@ -44,7 +44,7 @@ How do humans recognize and rectify social missteps? We achieve social competenc
 │   ├── general_code/                     # Keras/PyTorch GRU, LSTM, MLP and Transformer sweeps
 │   └── transformer/                      # Transformer model
 ├── code_rgb/                             # Frame-based (ResNet) error detection models
-├── submission/                           # Figures from the original submission
+├── supp_material/                        # Supplementary material PDF
 └── stimulus_dataset_information.xlsx     # The 30 stimulus videos: sources, type, error timestamps
 ```
 
@@ -141,8 +141,8 @@ For device fabrication, see [NeckFace: Continuously Tracking Full Facial Express
   author  = {Parreira, Maria Teresa and Zhang, Ruidong and Gowdru Lingaraju, Sukruth and Bremers, Alexandra and Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and Saha, Manaswi and Kuniavsky, Michael and Zhang, Cheng and Ju, Wendy},
   journal = {ACM Transactions on Human-Robot Interaction},
   year    = {2026},
-  doi  = {10.1145/3871067}
-  url = {https://doi.org/10.1145/3871067}
+  doi     = {10.1145/3871067},
+  url     = {https://doi.org/10.1145/3871067},
   publisher = {ACM}
 }
 ```
