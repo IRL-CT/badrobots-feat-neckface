@@ -141,6 +141,8 @@ For device fabrication, see [NeckFace: Continuously Tracking Full Facial Express
   author  = {Parreira, Maria Teresa and Zhang, Ruidong and Gowdru Lingaraju, Sukruth and Bremers, Alexandra and Fang, Xuanyu and Ramirez-Aristizabal, Adolfo and Saha, Manaswi and Kuniavsky, Michael and Zhang, Cheng and Ju, Wendy},
   journal = {ACM Transactions on Human-Robot Interaction},
   year    = {2026},
+  doi  = {10.1145/3871067}
+  url = {https://doi.org/10.1145/3871067}
   publisher = {ACM}
 }
 ```
